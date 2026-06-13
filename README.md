@@ -12,4 +12,4 @@ _TODO: Document how to use these profiles._
 
 ## License
 
-_TODO: Add license information._
+Released under the [MIT License](LICENSE).
