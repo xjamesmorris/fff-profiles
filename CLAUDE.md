@@ -10,6 +10,8 @@ published as small, individually importable PrusaSlicer config bundles (one fila
 
 - GitHub remote: https://github.com/xjamesmorris/fff-profiles
 - Default branch: `main`
+- Latest release: **v1.0.0** (2026-07-23) — first release; extraction tooling + the first
+  published profile (3DXTech 3DXLABS EMI-ABS). Tags use semver (`vMAJOR.MINOR.PATCH`).
 
 ## Repository layout
 
@@ -59,6 +61,8 @@ published as small, individually importable PrusaSlicer config bundles (one fila
 
 - Commit messages end with the `Co-Authored-By: Claude Opus 4.8` trailer.
 - Only commit/push when the author explicitly asks.
+- **After every push, update this handoff (`CLAUDE.md`) to reflect the new state, then
+  commit and push that update.** (Standing instruction from the author.)
 - `make test` (offline) must pass before committing tooling changes. `make test-net`
   additionally validates the parser against a pristine bundle from Prusa's GitHub.
 
@@ -78,6 +82,7 @@ published as small, individually importable PrusaSlicer config bundles (one fila
   OrcaSlicer/Bambu use per-preset JSON with its own key names and inheritance (`from`,
   `inherits`), vs. PrusaSlicer's INI config bundles; a key-name mapping + unit/semantic
   reconciliation layer will be the bulk of the work (see the gotchas above).
-- Populate `manifest.json` and publish the first real filament(s).
+- Publish more filaments (only 3DXTech 3DXLABS EMI-ABS is published so far; the two other
+  EMI-ABS variants were intentionally held back per the author).
 - Consider paired custom **process** profiles per filament (manifest already supports it).
 - Add CI (GitHub Actions) to run `make test` on push.
