@@ -11,14 +11,30 @@ Currently, these profiles only cover the Prusa CORE One+ device, with Prusaslice
 
 ## Usage
 
-These profiles are distributed as PrusaSlicer **config bundles** — single `.ini` files that can contain several named presets (for example, multiple filament profiles) at once. To use one:
+Profiles are published individually under [`filaments/`](filaments/) — one `.ini` per
+filament. Each file is a small PrusaSlicer **config bundle**: it holds the filament
+preset (plus any of its non-system parent presets, and optionally a paired print/process
+and printer preset). To use one:
 
-1. Download the bundle you want (or clone this repository).
+1. Download the `.ini` you want (or clone this repository).
 2. Open PrusaSlicer.
 3. Go to **File → Import → Import Config Bundle…** and select the `.ini` file, or drag and drop the file onto the PrusaSlicer window.
-4. The bundled print, filament, and printer presets will be added to the corresponding dropdowns. Select the ones you want before slicing.
+4. The imported presets are added to the corresponding dropdowns. Select the filament (and, if included, the print/printer preset) before slicing.
 
 Because these were tuned for a specific setup (Prusa CORE One+), treat them as starting points: review the print, filament, and printer settings and adjust them to match your own hardware, nozzle, and materials before printing.
+
+### Using these on a different printer
+
+Each filament preset carries a compatibility condition targeting the Prusa CORE One
+(for example `printer_model=~/(COREONE…)/ and nozzle_diameter[0]==0.4`), so on another
+printer the filament may show as **incompatible** and stay hidden. To adapt one:
+
+- Select a printer profile for **your** machine first, then either edit the filament's
+  *Compatible printers condition* (Filament Settings → Advanced) to match, or tick
+  *All* to show it regardless.
+- Re-check temperatures, cooling, flow, and max volumetric speed against your hotend and
+  extruder — these were tuned for the CORE One's high-flow hardware and are the settings
+  most likely to need adjusting.
 
 ### Exporting your own profiles
 
@@ -33,7 +49,40 @@ To export a single active configuration instead of a bundle, use **File → Expo
 
 ## A note on LLM usage
 
-Large language models were used in this project only for administrative and documentation tasks — for example, drafting and tidying this README and organizing the repository. The printing profiles themselves were developed, tuned, and validated by the human author.
+Large language models were used in this project only for administrative work:
+documentation (this README), repository organization, and the **tooling** that
+packages and validates the profiles — the extraction script under `scripts/` and its
+test suite. That tooling only *selects and copies* presets; it does not author, tune,
+or alter any of the profiles' technical values.
+
+The printing profiles themselves — every temperature, speed, flow, and cooling value —
+were developed, tuned, and validated by the human author.
+
+## Repository layout
+
+| Path | What it is |
+| --- | --- |
+| `filaments/` | Published, ready-to-import filament profiles (generated). |
+| `scripts/extract.py` | Splits the maintainer's master config bundle into the per-filament files. |
+| `tests/` | Test suite for the tooling, plus a fixture bundle. |
+| `manifest.example.json` | Template listing which presets to publish. |
+| `LICENSE`, `LICENSE-CODE` | CC BY-SA 4.0 (profiles/docs) and GPLv3 (code). |
+
+The full master bundle is maintained locally by the author and is not committed; only
+the curated per-filament outputs are published.
+
+## Development
+
+The tooling is plain Python 3 (standard library only — no dependencies).
+
+```sh
+make test          # run the offline test suite
+make test-net      # also validate against a pristine bundle pulled from Prusa's GitHub
+make list          # list presets in your local master bundle
+make publish       # regenerate filaments/ from manifest.json
+```
+
+See `scripts/extract.py --help` for direct usage.
 
 ## Contributing & reporting issues
 

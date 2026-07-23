@@ -1,0 +1,14 @@
+# The full working/master config bundle is maintained locally only, never committed.
+*config_bundle*.ini
+/private-bundle/
+/source/
+
+# Your real manifest (points at your local bundle path). The template is committed.
+/manifest.json
+
+# Python
+__pycache__/
+*.pyc
+
+# OS junk
+.DS_Store

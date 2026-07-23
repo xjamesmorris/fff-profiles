@@ -1,0 +1,22 @@
+{
+  "//": "Copy to manifest.json and edit. Lists which filaments to publish from your",
+  "//source": "local config bundle. `source` is your local bundle path (kept out of",
+  "//git": "git); `slug`, `print`, and `printer` are optional per entry.",
+
+  "source": "../PrusaSlicer_config_bundle.ini",
+  "out_dir": "filaments",
+  "filaments": [
+    {
+      "name": "3D-Fuel Pro PCTG @COREONE HF0.4 - JM",
+      "slug": "3dfuel-pro-pctg",
+      "print": null,
+      "printer": null
+    },
+    {
+      "name": "Generic ABS @COREONE HF0.4 JM",
+      "slug": "generic-abs",
+      "print": "0.20mm BALANCED @COREONE HF0.4 - Copy",
+      "printer": null
+    }
+  ]
+}
