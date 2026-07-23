@@ -68,11 +68,16 @@ published as small, individually importable PrusaSlicer config bundles (one fila
   checks profile language/structure/quality — e.g. resolvable `inherits`, no dangling
   parents, sane/consistent compatibility conditions, required keys present — to run
   *before incorporating changes* (candidate for a pre-commit hook / CI).
+- **OrcaSlicer notes doc (requested):** a brief Markdown file expanding the README's
+  "Calibration workflow" section — the author calibrated in OrcaSlicer (built-in tooling)
+  then finished in PrusaSlicer. Document the CORE One gotchas: pressure advance is
+  configured differently between the slicers, and OrcaSlicer needs custom G-code for the
+  heatbreak (cooling) temperature and the filtration fan (if installed).
 - **Slicer translation tool (requested):** a tool to port profiles between OrcaSlicer
   (and similar) and PrusaSlicer — in and out. Note the formats differ substantially:
   OrcaSlicer/Bambu use per-preset JSON with its own key names and inheritance (`from`,
   `inherits`), vs. PrusaSlicer's INI config bundles; a key-name mapping + unit/semantic
-  reconciliation layer will be the bulk of the work.
+  reconciliation layer will be the bulk of the work (see the gotchas above).
 - Populate `manifest.json` and publish the first real filament(s).
 - Consider paired custom **process** profiles per filament (manifest already supports it).
 - Add CI (GitHub Actions) to run `make test` on push.

@@ -48,6 +48,24 @@ If you want to share your own profiles or contribute changes back, export them a
 
 To export a single active configuration instead of a bundle, use **File → Export → Export Config…**.
 
+## Calibration workflow (OrcaSlicer → PrusaSlicer)
+
+These profiles were **initially calibrated in [OrcaSlicer](https://github.com/SoftFever/OrcaSlicer)**,
+using its built-in calibration tooling (flow, temperature, pressure advance, etc.), and then
+**transferred to PrusaSlicer for finishing** and day-to-day use.
+
+If you want to follow a similar workflow, be aware of some CORE One gotchas on the OrcaSlicer
+side:
+
+- **Pressure advance** is configured differently between the two slicers — don't copy the value
+  across blindly; re-check it in the target slicer.
+- OrcaSlicer needs **custom G-code** for things the Prusa firmware/PrusaSlicer handle more
+  directly, notably the **heatbreak (cooling) temperature** and the **filtration fan** (if you
+  have one installed).
+
+A dedicated write-up of these differences (and possibly a conversion helper) is planned — see
+the TODOs in `CLAUDE.md`.
+
 ## A note on LLM usage
 
 Large language models were used in this project only for administrative work:
