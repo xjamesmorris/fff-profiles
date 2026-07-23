@@ -1,13 +1,15 @@
 ---
 name: publish-filament
-description: Publish one or more filament profiles from the local PrusaSlicer master config bundle into the repo's filaments/ directory. Use when the author wants to extract, package, or release a filament (optionally with a paired process/printer) from their bundle, or regenerate filaments/*.ini.
+description: Publish one or more filament (or process) profiles from the local PrusaSlicer master config bundle into the repo's profiles/ tree. Use when the author wants to extract, package, or release a profile (optionally with a paired process/printer) from their bundle, or regenerate profiles/*.ini.
 ---
 
 # Publishing a filament profile
 
 This repo distributes PrusaSlicer profiles as small, individually importable config
-bundles under `filaments/`, generated from the author's master bundle by
-`scripts/extract.py`. Use this workflow to publish or update one.
+bundles under `profiles/<Vendor>/{filament,process}/`, generated from the author's master
+bundle by `scripts/extract.py`. Filenames encode printer+slicer and contain no spaces,
+e.g. `profiles/3DXTech/filament/3DXLABS_EMI-ABS__PrusaCOREOne_Prusaslicer.ini`. Use this
+workflow to publish or update one.
 
 ## Guardrails (read first)
 
@@ -27,7 +29,11 @@ bundles under `filaments/`, generated from the author's master bundle by
    Ignore scratch presets (`- Copy`, `Calibration`, `simple`, `OLD …`) unless asked.
 
 2. **Add entries to `manifest.json`** (copy from `manifest.example.json` if absent). Each
-   filament entry: `name` (required), optional `slug`, `print` (paired process), `printer`.
+   filament entry: `name` (exact preset name, required), `vendor` (required — the output
+   directory), optional `base` (filename base; derived from the name if omitted), optional
+   `print` (paired process) and `printer`. Manifest-level `printer_label`/`slicer_label`
+   default to `PrusaCOREOne` / `Prusaslicer`; override per entry if needed. Standalone print
+   profiles go in a `processes` list (same fields, minus `print`).
 
 3. **Generate:**
    ```sh
@@ -47,5 +53,5 @@ bundles under `filaments/`, generated from the author's master bundle by
 6. **Run the tests** before committing tooling changes: `make test` (offline). Optionally
    `make test-net` to validate the parser against a pristine bundle from Prusa's GitHub.
 
-7. Commit `filaments/*.ini` (and `manifest`-related changes) **only when asked**, with the
-   `Co-Authored-By: Claude Opus 4.8` trailer.
+7. Commit the generated `profiles/**/*.ini` **only when asked**, with the
+   `Co-Authored-By: Claude Opus 4.8` trailer. (`manifest.json` is gitignored — local only.)

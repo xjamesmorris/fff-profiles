@@ -1,22 +1,24 @@
 {
-  "//": "Copy to manifest.json and edit. Lists which filaments to publish from your",
-  "//source": "local config bundle. `source` is your local bundle path (kept out of",
-  "//git": "git); `slug`, `print`, and `printer` are optional per entry.",
+  "//": "Copy to manifest.json and edit. Lists which presets to publish from your local",
+  "//source": "config bundle (kept out of git). Output goes to:",
+  "//layout": "  <out_root>/<vendor>/<filament|process>/<base>__<printer_label>_<slicer_label>.ini",
+  "//optional": "Per entry: `base` (derived from name if omitted), `print`, `printer`,",
+  "//overrides": "and per-entry `printer_label` / `slicer_label` overrides.",
 
   "source": "../PrusaSlicer_config_bundle.ini",
-  "out_dir": "filaments",
+  "out_root": "profiles",
+  "printer_label": "PrusaCOREOne",
+  "slicer_label": "Prusaslicer",
+
   "filaments": [
     {
-      "name": "3D-Fuel Pro PCTG @COREONE HF0.4 - JM",
-      "slug": "3dfuel-pro-pctg",
+      "name": "3DXTech 3DXLABS EMI-ABS",
+      "vendor": "3DXTech",
+      "base": "3DXLABS_EMI-ABS",
       "print": null,
       "printer": null
-    },
-    {
-      "name": "Generic ABS @COREONE HF0.4 JM",
-      "slug": "generic-abs",
-      "print": "0.20mm BALANCED @COREONE HF0.4 - Copy",
-      "printer": null
     }
-  ]
+  ],
+
+  "processes": []
 }

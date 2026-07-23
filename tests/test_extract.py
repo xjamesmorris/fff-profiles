@@ -133,27 +133,69 @@ class TestRender(unittest.TestCase):
         self.assertIn(r'filament_notes = "first line\nsecond line"', text)
 
 
-class TestSlugify(unittest.TestCase):
-    def test_slugify_basic(self):
-        self.assertEqual(extract.slugify("3D-Fuel Pro PCTG @COREONE HF0.4 - JM"),
-                         "3d-fuel-pro-pctg-at-coreone-hf0-4-jm")
+class TestNaming(unittest.TestCase):
+    def test_sanitize_label_strips_spaces_and_punct(self):
+        self.assertEqual(extract.sanitize_label("Prusa CORE One"), "PrusaCOREOne")
+        self.assertEqual(extract.sanitize_label("PrusaSlicer 2.9"), "PrusaSlicer2.9")
 
-    def test_slugify_no_leading_trailing_dashes(self):
-        self.assertFalse(extract.slugify("  @weird@  ").startswith("-"))
-        self.assertFalse(extract.slugify("  @weird@  ").endswith("-"))
+    def test_derive_base_drops_vendor_and_at_suffix(self):
+        self.assertEqual(
+            extract.derive_base("3DXTech 3DXLABS EMI-ABS", "3DXTech"),
+            "3DXLABS_EMI-ABS",
+        )
+        self.assertEqual(
+            extract.derive_base("Generic ABS @COREONE HF0.4 JM", "Generic"),
+            "ABS",
+        )
+
+    def test_build_filename(self):
+        self.assertEqual(
+            extract.build_filename("3DXLABS_EMI-ABS", "PrusaCOREOne", "Prusaslicer"),
+            "3DXLABS_EMI-ABS__PrusaCOREOne_Prusaslicer.ini",
+        )
+
+    def test_output_path(self):
+        p = extract.output_path("profiles", "3DXTech", "filament", "X__Y_Z.ini")
+        self.assertEqual(p, Path("profiles/3DXTech/filament/X__Y_Z.ini"))
 
 
-class TestExtractOne(unittest.TestCase):
-    def test_writes_file_with_expected_headers(self):
+class TestPublish(unittest.TestCase):
+    def setUp(self):
+        self.sections = extract.parse_bundle(FIXTURE.read_text(encoding="utf-8"))
+
+    def test_filament_written_to_vendor_layout(self):
         import tempfile
-        sections = extract.parse_bundle(FIXTURE.read_text(encoding="utf-8"))
+        manifest = {
+            "printer_label": "PrusaCOREOne", "slicer_label": "Prusaslicer",
+            "filaments": [{"name": "Tuned PLA", "vendor": "TestCo", "base": "Tuned_PLA"}],
+        }
         with tempfile.TemporaryDirectory() as d:
-            out = extract.extract_one(sections, "Tuned PLA", None, None, Path(d), "tuned-pla")
-            self.assertTrue(out.exists())
+            written = extract.publish(self.sections, manifest, out_root=d)
+            self.assertEqual(len(written), 1)
+            out = written[0]
+            self.assertEqual(out, Path(d) / "TestCo" / "filament" / "Tuned_PLA__PrusaCOREOne_Prusaslicer.ini")
             text = out.read_text(encoding="utf-8")
             self.assertIn("[filament:Tuned PLA]", text)
-            self.assertIn("[filament:Base PLA]", text)
+            self.assertIn("[filament:Base PLA]", text)   # user parent pulled in
             self.assertNotIn("[presets]", text)
+
+    def test_process_written_to_process_dir(self):
+        import tempfile
+        manifest = {"processes": [{"name": "Fast Process", "vendor": "Generic", "base": "Fast"}]}
+        with tempfile.TemporaryDirectory() as d:
+            written = extract.publish(self.sections, manifest, out_root=d)
+            out = written[0]
+            self.assertEqual(out.parent, Path(d) / "Generic" / "process")
+            text = out.read_text(encoding="utf-8")
+            self.assertIn("[print:Fast Process]", text)
+            self.assertIn("[print:Base Process]", text)  # print parent pulled in
+
+    def test_base_derived_when_omitted(self):
+        import tempfile
+        manifest = {"filaments": [{"name": "Standalone ABS", "vendor": "Acme"}]}
+        with tempfile.TemporaryDirectory() as d:
+            out = extract.publish(self.sections, manifest, out_root=d)[0]
+            self.assertEqual(out.name, "Standalone_ABS__PrusaCOREOne_Prusaslicer.ini")
 
 
 @unittest.skipUnless(os.environ.get("FFF_NET_TESTS"), "network smoke test; set FFF_NET_TESTS=1 to run")

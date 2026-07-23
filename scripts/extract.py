@@ -32,20 +32,32 @@ Why a script instead of PrusaSlicer's "Export Config Bundle" checkboxes:
 Scope: this tool only *selects and copies* presets verbatim. It never edits,
 tunes, or flattens any technical values — that stays with the human author.
 
+Output layout (see the manifest below):
+
+    <out_root>/<vendor>/<category>/<base>__<printer_label>_<slicer_label>.ini
+    e.g. profiles/3DXTech/filament/3DXLABS_EMI-ABS__PrusaCOREOne_Prusaslicer.ini
+
 Usage:
-  python3 scripts/extract.py --list                  # show presets in the bundle
-  python3 scripts/extract.py --manifest manifest.json # extract everything listed
-  python3 scripts/extract.py --source bundle.ini --filament "Name" [--print P] [--printer PR] [--out DIR]
+  python3 scripts/extract.py --list                     # show presets in the bundle
+  python3 scripts/extract.py --manifest manifest.json    # publish everything listed
+  python3 scripts/extract.py --source B --filament "Name" --vendor V [--base B] \
+      [--print P] [--printer PR] [--printer-label L] [--slicer-label L] [--out-root DIR]
 
 Manifest format (JSON):
   {
-    "source":  "../PrusaSlicer_config_bundle.ini",   # optional, overridable by --source
-    "out_dir": "filaments",                            # optional, default "filaments"
+    "source":        "../PrusaSlicer_config_bundle.ini",  # overridable by --source
+    "out_root":      "profiles",                           # default "profiles"
+    "printer_label": "PrusaCOREOne",                       # default, per-entry overridable
+    "slicer_label":  "Prusaslicer",                        # default, per-entry overridable
     "filaments": [
-      { "name": "3D-Fuel Pro PCTG @COREONE HF0.4 - JM",
-        "slug": "3dfuel-pro-pctg",                     # optional; derived from name if omitted
-        "print":   null,                                # optional paired process preset name
-        "printer": null }                               # optional paired printer preset name
+      { "name":   "3DXTech 3DXLABS EMI-ABS",   # exact preset name in the bundle
+        "vendor": "3DXTech",                     # -> profiles/3DXTech/filament/...
+        "base":   "3DXLABS_EMI-ABS",             # optional; derived from name if omitted
+        "print":   null,                          # optional paired process preset
+        "printer": null }                         # optional paired printer preset
+    ],
+    "processes": [                                 # optional: standalone process profiles
+      { "name": "0.20mm STRUCTURAL @COREONE 0.4", "vendor": "Generic", "base": "0.20mm_STRUCTURAL" }
     ]
   }
 """
@@ -58,6 +70,10 @@ import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
+
+DEFAULT_OUT_ROOT = "profiles"
+DEFAULT_PRINTER_LABEL = "PrusaCOREOne"
+DEFAULT_SLICER_LABEL = "Prusaslicer"
 
 
 @dataclass
@@ -92,7 +108,6 @@ def parse_bundle(text: str) -> list[Section]:
         elif current is not None:
             current.body.append(raw)
         # lines before the first header (e.g. a leading comment) are ignored
-    # Trim trailing blank lines from each body so re-emission is tidy.
     for s in sections:
         while s.body and s.body[-1].strip() == "":
             s.body.pop()
@@ -130,54 +145,77 @@ def resolve_chain(
     if section is None:
         external.add(name)
         return
-    # Collect ancestors first so they are emitted before descendants.
     for parent in parents_of(section):
         resolve_chain(kind, parent, idx, collected, external)
     collected[key] = section
 
 
-def slugify(name: str) -> str:
-    s = name.lower()
-    s = s.replace("@", "at ").replace("&", "and")
-    s = re.sub(r"[^a-z0-9]+", "-", s)
-    return s.strip("-")
+def collect(sections: list[Section], roots: list[tuple[str, str]]) -> tuple[list[Section], list[str]]:
+    """Resolve every root (kind, name) and its in-bundle ancestors.
 
-
-def build_output(
-    sections: list[Section],
-    filament: str,
-    print_preset: str | None,
-    printer: str | None,
-) -> tuple[list[Section], list[str]]:
-    """Return (ordered sections to emit, warnings)."""
+    Returns (sections-to-emit ordered printer->print->filament, ancestors-first, warnings).
+    Raises KeyError if a requested root is missing from the bundle.
+    """
     idx = index(sections)
-    if ("filament", filament) not in idx:
-        raise KeyError(f"filament preset not found in bundle: {filament!r}")
+    for kind, name in roots:
+        if (kind, name) not in idx:
+            raise KeyError(f"{kind} preset not found in bundle: {name!r}")
 
     collected: dict[tuple[str, str], Section] = {}
     external: set[str] = set()
+    for kind, name in roots:
+        resolve_chain(kind, name, idx, collected, external)
 
-    resolve_chain("filament", filament, idx, collected, external)
-    if print_preset:
-        if ("print", print_preset) not in idx:
-            raise KeyError(f"print preset not found in bundle: {print_preset!r}")
-        resolve_chain("print", print_preset, idx, collected, external)
-    if printer:
-        if ("printer", printer) not in idx:
-            raise KeyError(f"printer preset not found in bundle: {printer!r}")
-        resolve_chain("printer", printer, idx, collected, external)
-
-    # Emit order: printer, print, filament — parents already precede children
-    # within each kind because resolve_chain inserts ancestors first.
     order = {"printer": 0, "print": 1, "filament": 2}
     emitted = sorted(collected.values(), key=lambda s: order.get(s.kind, 9))
-
-    warnings: list[str] = []
-    for ext in sorted(external):
-        warnings.append(
-            f"references parent not in bundle (assuming PrusaSlicer system preset): {ext!r}"
-        )
+    warnings = [
+        f"references parent not in bundle (assuming PrusaSlicer system preset): {ext!r}"
+        for ext in sorted(external)
+    ]
     return emitted, warnings
+
+
+def build_output(sections, filament, print_preset=None, printer=None):
+    """Resolve a filament (+ optional paired print/printer) into emittable sections."""
+    roots: list[tuple[str, str]] = [("filament", filament)]
+    if print_preset:
+        roots.append(("print", print_preset))
+    if printer:
+        roots.append(("printer", printer))
+    return collect(sections, roots)
+
+
+def build_process_output(sections, print_preset, printer=None):
+    """Resolve a standalone process (print) preset (+ optional printer)."""
+    roots: list[tuple[str, str]] = [("print", print_preset)]
+    if printer:
+        roots.append(("printer", printer))
+    return collect(sections, roots)
+
+
+def sanitize_label(label: str) -> str:
+    """A filename label with no spaces or separators that would confuse the scheme."""
+    return re.sub(r"[^0-9A-Za-z.+\-]", "", label.replace(" ", ""))
+
+
+def derive_base(name: str, vendor: str) -> str:
+    """Derive a spaceless filename base from a preset name, dropping a leading vendor
+    token and any `@printer…` compatibility suffix. Prefer an explicit `base` for control."""
+    s = name
+    if vendor and s.lower().startswith(vendor.lower()):
+        s = s[len(vendor):].lstrip(" -_")
+    s = re.sub(r"\s*@.*$", "", s)         # strip "@COREONE …" suffix
+    s = re.sub(r"\s+", "_", s.strip())    # spaces -> underscores
+    s = re.sub(r"[^0-9A-Za-z_.+\-]", "", s)
+    return s
+
+
+def build_filename(base: str, printer_label: str, slicer_label: str) -> str:
+    return f"{base}__{sanitize_label(printer_label)}_{sanitize_label(slicer_label)}.ini"
+
+
+def output_path(out_root, vendor: str, category: str, filename: str) -> Path:
+    return Path(out_root) / vendor / category / filename
 
 
 def render(sections: list[Section]) -> str:
@@ -186,8 +224,22 @@ def render(sections: list[Section]) -> str:
     for s in sections:
         out.append(s.header)
         out.extend(s.body)
-        out.append("")  # blank line between sections
+        out.append("")
     return "\n".join(out).rstrip("\n") + "\n"
+
+
+def write_output(emitted: list[Section], warnings: list[str], path: Path) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(render(emitted), encoding="utf-8")
+    kinds = ", ".join(
+        f"{sum(1 for s in emitted if s.kind == k)} {k}"
+        for k in ("filament", "print", "printer")
+        if any(s.kind == k for s in emitted)
+    )
+    print(f"wrote {path}  ({kinds})")
+    for w in warnings:
+        print(f"  note: {w}")
+    return path
 
 
 def load_source(path: Path) -> list[Section]:
@@ -204,23 +256,30 @@ def cmd_list(sections: list[Section]) -> None:
             print(f"  {n}")
 
 
-def extract_one(
-    sections: list[Section],
-    filament: str,
-    print_preset: str | None,
-    printer: str | None,
-    out_dir: Path,
-    slug: str | None,
-) -> Path:
-    emitted, warnings = build_output(sections, filament, print_preset, printer)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / f"{slug or slugify(filament)}.ini"
-    out_path.write_text(render(emitted), encoding="utf-8")
-    kinds = ", ".join(f"{sum(1 for s in emitted if s.kind==k)} {k}" for k in ("filament", "print", "printer") if any(s.kind == k for s in emitted))
-    print(f"wrote {out_path}  ({kinds})")
-    for w in warnings:
-        print(f"  note: {w}")
-    return out_path
+def publish(sections, manifest, out_root=None) -> list[Path]:
+    """Run a manifest: write every filament and process entry to its computed path."""
+    root = out_root or manifest.get("out_root", DEFAULT_OUT_ROOT)
+    pl = manifest.get("printer_label", DEFAULT_PRINTER_LABEL)
+    sl = manifest.get("slicer_label", DEFAULT_SLICER_LABEL)
+    written: list[Path] = []
+
+    for e in manifest.get("filaments", []):
+        emitted, warnings = build_output(sections, e["name"], e.get("print"), e.get("printer"))
+        base = e.get("base") or derive_base(e["name"], e.get("vendor", ""))
+        fn = build_filename(base, e.get("printer_label", pl), e.get("slicer_label", sl))
+        written.append(write_output(emitted, warnings,
+                                    output_path(root, e["vendor"], "filament", fn)))
+
+    for e in manifest.get("processes", []):
+        emitted, warnings = build_process_output(sections, e["name"], e.get("printer"))
+        base = e.get("base") or derive_base(e["name"], e.get("vendor", ""))
+        fn = build_filename(base, e.get("printer_label", pl), e.get("slicer_label", sl))
+        written.append(write_output(emitted, warnings,
+                                    output_path(root, e["vendor"], "process", fn)))
+
+    if not written:
+        sys.exit("manifest has no 'filaments' or 'processes' entries")
+    return written
 
 
 def main(argv: list[str]) -> int:
@@ -228,10 +287,13 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--source", help="path to the config bundle .ini")
     ap.add_argument("--manifest", help="path to a JSON manifest (batch mode)")
     ap.add_argument("--filament", help="single filament preset name to extract")
+    ap.add_argument("--vendor", help="vendor directory (single mode)")
+    ap.add_argument("--base", help="filename base (single mode; derived if omitted)")
     ap.add_argument("--print", dest="print_preset", help="paired print (process) preset name")
     ap.add_argument("--printer", help="paired printer preset name")
-    ap.add_argument("--out", default="filaments", help="output directory (default: filaments)")
-    ap.add_argument("--slug", help="output filename slug (single mode)")
+    ap.add_argument("--printer-label", default=DEFAULT_PRINTER_LABEL, help="printer token in filename")
+    ap.add_argument("--slicer-label", default=DEFAULT_SLICER_LABEL, help="slicer token in filename")
+    ap.add_argument("--out-root", default=DEFAULT_OUT_ROOT, help="output root (default: profiles)")
     ap.add_argument("--list", action="store_true", help="list presets in the bundle and exit")
     args = ap.parse_args(argv)
 
@@ -249,18 +311,16 @@ def main(argv: list[str]) -> int:
         return 0
 
     if args.filament:
-        extract_one(sections, args.filament, args.print_preset, args.printer,
-                    Path(args.out), args.slug)
+        if not args.vendor:
+            ap.error("--filament requires --vendor")
+        emitted, warnings = build_output(sections, args.filament, args.print_preset, args.printer)
+        base = args.base or derive_base(args.filament, args.vendor)
+        fn = build_filename(base, args.printer_label, args.slicer_label)
+        write_output(emitted, warnings, output_path(args.out_root, args.vendor, "filament", fn))
         return 0
 
     if manifest:
-        out_dir = Path(args.out if args.out != "filaments" else manifest.get("out_dir", "filaments"))
-        entries = manifest.get("filaments", [])
-        if not entries:
-            sys.exit("manifest has no 'filaments' entries")
-        for e in entries:
-            extract_one(sections, e["name"], e.get("print"), e.get("printer"),
-                        out_dir, e.get("slug"))
+        publish(sections, manifest, args.out_root if args.out_root != DEFAULT_OUT_ROOT else None)
         return 0
 
     ap.error("nothing to do: pass --list, --filament, or --manifest")

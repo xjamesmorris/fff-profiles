@@ -14,8 +14,11 @@ published as small, individually importable PrusaSlicer config bundles (one fila
 ## Repository layout
 
 - `README.md` — usage (import, adapting to other printers), LLM-usage note, contributing, license.
-- `filaments/` — published, generated per-filament `.ini` bundles (the distributables).
-- `scripts/extract.py` — GPLv3 tool that splits the master bundle into per-filament files.
+- `profiles/<Vendor>/{filament,process}/` — published, generated `.ini` bundles (the
+  distributables). Filename convention:
+  `<Base>__<Printer>_<Slicer>.ini` (no spaces; printer+slicer encoded in the name),
+  e.g. `profiles/3DXTech/filament/3DXLABS_EMI-ABS__PrusaCOREOne_Prusaslicer.ini`.
+- `scripts/extract.py` — GPLv3 tool that splits the master bundle into per-profile files.
 - `tests/` — `test_extract.py` (stdlib `unittest`) + `fixtures/sample_bundle.ini`.
 - `manifest.example.json` — template listing which presets to publish.
 - `Makefile` — `test`, `test-net`, `list`, `publish` targets.
@@ -27,19 +30,23 @@ published as small, individually importable PrusaSlicer config bundles (one fila
    `.ini` (default path `../PrusaSlicer_config_bundle.ini`). This master is **local-only —
    never committed** (it contains many experimental/`- Copy` presets). `.gitignore` blocks
    `*config_bundle*.ini` and the real `manifest.json`.
-2. `manifest.json` (copied from the example) lists which filaments to publish, each with an
-   optional paired print (process) and/or printer preset.
+2. `manifest.json` (copied from the example) lists which filaments/processes to publish. Each
+   entry: `name` (exact preset name), `vendor`, optional `base` (filename base; derived if
+   omitted), optional paired `print`/`printer`, optional `printer_label`/`slicer_label`
+   overrides. Manifest-level `printer_label`/`slicer_label` default to `PrusaCOREOne` /
+   `Prusaslicer`. Output path: `<out_root>/<vendor>/<filament|process>/<base>__<printer>_<slicer>.ini`.
 3. `make publish` runs `scripts/extract.py`, which for each filament walks its `inherits`
    chain: ancestors that are *also user presets in the bundle* are included; ancestors NOT
    in the bundle are assumed to be PrusaSlicer **system presets** and left as references
    (a `note:` is printed for each — review these, since a *dangling* parent looks the same
    as a system one). The `[presets]` block (UI selection state) is dropped.
-4. Output lands in `filaments/*.ini`; those ARE committed.
+4. Output lands under `profiles/<Vendor>/<filament|process>/…`; those ARE committed.
 
 ## Key decisions (do not silently reverse)
 
-- **Distribution: per-filament config bundles** in `filaments/`, imported via
-  `File → Import → Import Config Bundle…`. Not one big bundle.
+- **Distribution: per-profile config bundles** under `profiles/<Vendor>/{filament,process}/`,
+  imported via `File → Import → Import Config Bundle…`. Not one big bundle. Filenames encode
+  printer+slicer and contain no spaces (e.g. `3DXLABS_EMI-ABS__PrusaCOREOne_Prusaslicer.ini`).
 - **Master bundle stays local/private**; only curated per-filament outputs are published.
 - **Tooling is stdlib-only Python 3** (no third-party deps). Keep it that way.
 - **Dual licensing:** profiles + docs → CC BY-SA 4.0 (`LICENSE`); code → GPLv3

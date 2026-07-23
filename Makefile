@@ -10,7 +10,7 @@ help:
 	@echo "  make test      - run the offline test suite"
 	@echo "  make test-net  - also run the pristine-Prusa-bundle smoke test (needs network)"
 	@echo "  make list      - list presets in \$$BUNDLE (default: $(BUNDLE))"
-	@echo "  make publish   - extract everything in \$$MANIFEST (default: $(MANIFEST)) into filaments/"
+	@echo "  make publish   - extract everything in \$$MANIFEST (default: $(MANIFEST)) into profiles/"
 
 test:
 	$(PYTHON) -m unittest discover -s tests -v

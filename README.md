@@ -11,10 +11,11 @@ Currently, these profiles only cover the Prusa CORE One+ device, with Prusaslice
 
 ## Usage
 
-Profiles are published individually under [`filaments/`](filaments/) — one `.ini` per
-filament. Each file is a small PrusaSlicer **config bundle**: it holds the filament
-preset (plus any of its non-system parent presets, and optionally a paired print/process
-and printer preset). To use one:
+Profiles are published individually under [`profiles/`](profiles/), organised by vendor as
+`profiles/<Vendor>/filament/<Base>__<Printer>_<Slicer>.ini` (the target printer and slicer
+are encoded in the filename). Each file is a small PrusaSlicer **config bundle**: it holds
+the filament preset (plus any of its non-system parent presets, and optionally a paired
+print/process and printer preset). To use one:
 
 1. Download the `.ini` you want (or clone this repository).
 2. Open PrusaSlicer.
@@ -62,8 +63,8 @@ were developed, tuned, and validated by the human author.
 
 | Path | What it is |
 | --- | --- |
-| `filaments/` | Published, ready-to-import filament profiles (generated). |
-| `scripts/extract.py` | Splits the maintainer's master config bundle into the per-filament files. |
+| `profiles/<Vendor>/{filament,process}/` | Published, ready-to-import profiles (generated). |
+| `scripts/extract.py` | Splits the maintainer's master config bundle into the per-profile files. |
 | `tests/` | Test suite for the tooling, plus a fixture bundle. |
 | `manifest.example.json` | Template listing which presets to publish. |
 | `LICENSE`, `LICENSE-CODE` | CC BY-SA 4.0 (profiles/docs) and GPLv3 (code). |
@@ -79,7 +80,7 @@ The tooling is plain Python 3 (standard library only — no dependencies).
 make test          # run the offline test suite
 make test-net      # also validate against a pristine bundle pulled from Prusa's GitHub
 make list          # list presets in your local master bundle
-make publish       # regenerate filaments/ from manifest.json
+make publish       # regenerate profiles/ from manifest.json
 ```
 
 See `scripts/extract.py --help` for direct usage.
