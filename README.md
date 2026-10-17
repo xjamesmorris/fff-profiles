@@ -22,13 +22,23 @@ print/process and printer preset). To use one:
 3. Go to **File → Import → Import Config Bundle…** and select the `.ini` file, or drag and drop the file onto the PrusaSlicer window.
 4. The imported presets are added to the corresponding dropdowns. Select the filament (and, if included, the print/printer preset) before slicing.
 
+### Printer-side setup
+
+Some profiles tag prints with a filament type the Core One doesn't have built in (for
+example `PEKK-A`). For those, create a matching custom filament on the printer first, or it
+will show a wrong-filament warning when you start a print. See
+[Adding a custom filament on the Prusa Core One](docs/CoreOne_custom_filament.md), which
+also covers the hardware requirements for the 3DXTech PEKK-A+CF profile.
+
 Because these were tuned for a specific setup (Prusa CORE One+), treat them as starting points: review the print, filament, and printer settings and adjust them to match your own hardware, nozzle, and materials before printing.
 
 ### Using these on a different printer
 
 Each filament preset carries a compatibility condition targeting the Prusa CORE One
 (for example `printer_model=~/(COREONE…)/ and nozzle_diameter[0]==0.4`), so on another
-printer the filament may show as **incompatible** and stay hidden. To adapt one:
+printer the filament may show as **incompatible** and stay hidden. Some profiles are
+narrower still: the 3DXTech PEKK-A+CF profile only matches a CORE One with the HT400 hotend
+and a standard-flow 0.6 mm nozzle. To adapt one:
 
 - Select a printer profile for **your** machine first, then either edit the filament's
   *Compatible printers condition* (Filament Settings → Advanced) to match, or tick
@@ -82,6 +92,7 @@ were developed, tuned, and validated by the human author.
 | Path | What it is |
 | --- | --- |
 | `profiles/<Vendor>/{filament,process}/` | Published, ready-to-import profiles (generated). |
+| `docs/` | Setup guides (e.g. adding a custom filament on the Core One). |
 | `scripts/extract.py` | Splits the maintainer's master config bundle into the per-profile files. |
 | `tests/` | Test suite for the tooling, plus a fixture bundle. |
 | `manifest.example.json` | Template listing which presets to publish. |

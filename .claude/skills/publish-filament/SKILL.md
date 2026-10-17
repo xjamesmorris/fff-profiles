@@ -54,4 +54,4 @@ workflow to publish or update one.
    `make test-net` to validate the parser against a pristine bundle from Prusa's GitHub.
 
 7. Commit the generated `profiles/**/*.ini` **only when asked**, with the
-   `Co-Authored-By: Claude Opus 4.8` trailer. (`manifest.json` is gitignored — local only.)
+   `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` trailer. (`manifest.json` is gitignored — local only.)

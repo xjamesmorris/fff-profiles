@@ -20,6 +20,9 @@ published as small, individually importable PrusaSlicer config bundles (one fila
   distributables). Filename convention:
   `<Base>__<Printer>_<Slicer>.ini` (no spaces; printer+slicer encoded in the name),
   e.g. `profiles/3DXTech/filament/3DXLABS_EMI-ABS__PrusaCOREOne_Prusaslicer.ini`.
+- `docs/` — user-facing setup guides. `CoreOne_custom_filament.md`: creating a custom
+  filament on the printer so a non-built-in `filament_type` (e.g. `PEKK-A`) doesn't trigger
+  a wrong-filament warning; PEKK-A+CF is the worked example.
 - `scripts/extract.py` — GPLv3 tool that splits the master bundle into per-profile files.
 - `tests/` — `test_extract.py` (stdlib `unittest`) + `fixtures/sample_bundle.ini`.
 - `manifest.example.json` — template listing which presets to publish.
@@ -43,6 +46,15 @@ published as small, individually importable PrusaSlicer config bundles (one fila
    (a `note:` is printed for each — review these, since a *dangling* parent looks the same
    as a system one). The `[presets]` block (UI selection state) is dropped.
 4. Output lands under `profiles/<Vendor>/<filament|process>/…`; those ARE committed.
+5. **Exception: hand-supplied profiles.** The author may hand over a finalized `.ini`
+   based on a PrusaSlicer export. Copy it into `profiles/` **verbatim** (verify with `cmp`) and
+   do NOT add it to `manifest.json`. Currently:
+   `profiles/3DXTech/filament/CARBONX_PEKK-A+CF_HT0.6__PrusaCOREOne_Prusaslicer.ini` (preset
+   `3DXTech PEKK-A+CF @COREONE HT0.6 experimental`, inherits system preset
+   `Fiberon PPS-CF @COREONE HT0.6`), copied verbatim from the author's finalized
+   `~/stuff/src/misc/3DXTech_PEKK-A+CF_COREONE_HT0.6.ini`. To update it, re-copy the
+   author's new file; don't regenerate it from a bundle. A same-named `.md` beside it
+   points users to the printer-side `PEKK-A` custom filament settings in `docs/`.
 
 ## Key decisions (do not silently reverse)
 
@@ -59,7 +71,7 @@ published as small, individually importable PrusaSlicer config bundles (one fila
 
 ## Conventions
 
-- Commit messages end with the `Co-Authored-By: Claude Opus 4.8` trailer.
+- Commit messages end with the `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` trailer.
 - Only commit/push when the author explicitly asks.
 - **After every push, update this handoff (`CLAUDE.md`) to reflect the new state, then
   commit and push that update.** (Standing instruction from the author.)
@@ -82,7 +94,9 @@ published as small, individually importable PrusaSlicer config bundles (one fila
   OrcaSlicer/Bambu use per-preset JSON with its own key names and inheritance (`from`,
   `inherits`), vs. PrusaSlicer's INI config bundles; a key-name mapping + unit/semantic
   reconciliation layer will be the bulk of the work (see the gotchas above).
-- Publish more filaments (only 3DXTech 3DXLABS EMI-ABS is published so far; the two other
-  EMI-ABS variants were intentionally held back per the author).
+- Publish more filaments. Published so far: 3DXTech 3DXLABS EMI-ABS (generated) and
+  3DXTech PEKK-A+CF HT0.6 (hand-supplied, experimental/uncalibrated). The two other EMI-ABS
+  variants were intentionally held back per the author, and so was the paired print profile
+  `0.30mm High Temperature @COREONE HT0.6 - PEKK-A` (filament only for now).
 - Consider paired custom **process** profiles per filament (manifest already supports it).
 - Add CI (GitHub Actions) to run `make test` on push.
