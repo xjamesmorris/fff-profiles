@@ -14,9 +14,10 @@ published as small, individually importable PrusaSlicer config bundles (one fila
   HT0.6 profile (+ per-profile readme) and `docs/CoreOne_custom_filament.md`.
 - Previous: **v1.0.0** (2026-07-23) — first release; extraction tooling + the first
   published profile (3DXTech 3DXLABS EMI-ABS).
-- Unreleased on `main` since v1.1.0 (2026-10-17, through `34372fc`): pre-commit validation
+- Unreleased on `main` since v1.1.0 (2026-10-17, through `61c82fb`): pre-commit validation
   suite (`scripts/validate.py`, `.githooks/`, `make check`/`hooks`), EMI-ABS printer-side
-  setup docs + readme, author's `README__<profile>.md` naming for profile readmes.
+  setup docs + readme, author's `README__<profile>.md` naming for profile readmes, EMI-ABS
+  `filament_vendor` set to 3DXTech. Validator is clean (0 errors, 0 warnings).
 - Tags use semver (`vMAJOR.MINOR.PATCH`), annotated (`vX.Y.Z — summary`), each with a
   matching GitHub release (`gh release create`) whose notes follow the v1.0.0 layout.
 
