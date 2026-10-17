@@ -110,8 +110,11 @@ published as small, individually importable PrusaSlicer config bundles (one fila
 
 ## Likely next steps / TODO
 
-- **EMI-ABS vendor (author to decide):** `filament_vendor = Generic`, but the directory
-  says 3DXTech (validator `vendor` warning). A profile-value change, so it's the author's call.
+- **Sync EMI-ABS vendor back to PrusaSlicer (author):** the published file's
+  `filament_vendor` was changed from Generic to 3DXTech at the author's direction
+  (2026-10-17; metadata only, no technical values touched). The author's live PrusaSlicer
+  preset and master bundle still say Generic. Update them in PrusaSlicer and re-export
+  before the next `make publish`, or regenerating will revert it.
 - **OrcaSlicer notes doc (requested):** a brief Markdown file expanding the README's
   "Calibration workflow" section — the author calibrated in OrcaSlicer (built-in tooling)
   then finished in PrusaSlicer. Document the CORE One gotchas: pressure advance is
