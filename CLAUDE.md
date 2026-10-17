@@ -10,11 +10,12 @@ published as small, individually importable PrusaSlicer config bundles (one fila
 
 - GitHub remote: https://github.com/xjamesmorris/fff-profiles
 - Default branch: `main`
-- Latest release: **v1.0.0** (2026-07-23) — first release; extraction tooling + the first
-  published profile (3DXTech 3DXLABS EMI-ABS). Tags use semver (`vMAJOR.MINOR.PATCH`).
-- Unreleased on `main` since v1.0.0 (2026-10-17, `cd72994`): 3DXTech CarbonX PEKK-A+CF HT0.6
-  profile (+ per-profile readme), `docs/CoreOne_custom_filament.md`, commit trailer switched
-  to Opus 5.5. Not tagged; a new profile would be a minor bump (`v1.1.0`) if the author asks.
+- Latest release: **v1.1.0** (2026-10-17, tag on `cc5e7cc`) — 3DXTech CarbonX PEKK-A+CF
+  HT0.6 profile (+ per-profile readme) and `docs/CoreOne_custom_filament.md`.
+- Previous: **v1.0.0** (2026-07-23) — first release; extraction tooling + the first
+  published profile (3DXTech 3DXLABS EMI-ABS).
+- Tags use semver (`vMAJOR.MINOR.PATCH`), annotated (`vX.Y.Z — summary`), each with a
+  matching GitHub release (`gh release create`) whose notes follow the v1.0.0 layout.
 
 ## Repository layout
 
