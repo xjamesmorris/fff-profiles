@@ -12,6 +12,9 @@ published as small, individually importable PrusaSlicer config bundles (one fila
 - Default branch: `main`
 - Latest release: **v1.0.0** (2026-07-23) — first release; extraction tooling + the first
   published profile (3DXTech 3DXLABS EMI-ABS). Tags use semver (`vMAJOR.MINOR.PATCH`).
+- Unreleased on `main` since v1.0.0 (2026-10-17, `cd72994`): 3DXTech CarbonX PEKK-A+CF HT0.6
+  profile (+ per-profile readme), `docs/CoreOne_custom_filament.md`, commit trailer switched
+  to Opus 5.5. Not tagged; a new profile would be a minor bump (`v1.1.0`) if the author asks.
 
 ## Repository layout
 
