@@ -1,0 +1,19 @@
+#!/bin/sh
+# Pre-commit: validate exactly what's staged (profiles, docs, repo hygiene) and run the
+# offline tests against it. Enable once per clone with `make hooks`.
+# Bypass in an emergency with `git commit --no-verify`.
+set -eu
+
+PYTHON=${PYTHON:-python3}
+snapshot=$(mktemp -d "${TMPDIR:-/tmp}/fff-precommit.XXXXXX")
+trap 'rm -rf "$snapshot"' EXIT INT TERM
+
+# Export the index (staged content), not the working tree, so unstaged edits
+# can't hide problems in what's actually being committed.
+git checkout-index --all --prefix="$snapshot/"
+
+echo "pre-commit: validating staged snapshot"
+"$PYTHON" "$snapshot/scripts/validate.py" --root "$snapshot"
+
+echo "pre-commit: running offline tests"
+(cd "$snapshot" && PYTHONDONTWRITEBYTECODE=1 "$PYTHON" -m unittest discover -s tests -q)

@@ -25,10 +25,10 @@ print/process and printer preset). To use one:
 ### Printer-side setup
 
 Some profiles tag prints with a filament type the Core One doesn't have built in (for
-example `PEKK-A`). For those, create a matching custom filament on the printer first, or it
-will show a wrong-filament warning when you start a print. See
+example `PEKK-A` or `EMI-ABS`). For those, create a matching custom filament on the printer
+first, or it will show a wrong-filament warning when you start a print. See
 [Adding a custom filament on the Prusa Core One](docs/CoreOne_custom_filament.md), which
-also covers the hardware requirements for the 3DXTech PEKK-A+CF profile.
+has the exact printer settings and hardware requirements for each such profile.
 
 Because these were tuned for a specific setup (Prusa CORE One+), treat them as starting points: review the print, filament, and printer settings and adjust them to match your own hardware, nozzle, and materials before printing.
 
@@ -80,8 +80,8 @@ the TODOs in `CLAUDE.md`.
 
 Large language models were used in this project only for administrative work:
 documentation (this README), repository organization, and the **tooling** that
-packages and validates the profiles — the extraction script under `scripts/` and its
-test suite. That tooling only *selects and copies* presets; it does not author, tune,
+packages and validates the profiles — the extraction and validation scripts under
+`scripts/`, their test suites, and the pre-commit hook. That tooling only *selects, copies and checks* presets; it does not author, tune,
 or alter any of the profiles' technical values.
 
 The printing profiles themselves — every temperature, speed, flow, and cooling value —
@@ -94,6 +94,7 @@ were developed, tuned, and validated by the human author.
 | `profiles/<Vendor>/{filament,process}/` | Published, ready-to-import profiles (generated). |
 | `docs/` | Setup guides (e.g. adding a custom filament on the Core One). |
 | `scripts/extract.py` | Splits the maintainer's master config bundle into the per-profile files. |
+| `scripts/validate.py`, `.githooks/` | Pre-commit validation of profiles, docs and repo hygiene. |
 | `tests/` | Test suite for the tooling, plus a fixture bundle. |
 | `manifest.example.json` | Template listing which presets to publish. |
 | `LICENSE`, `LICENSE-CODE` | CC BY-SA 4.0 (profiles/docs) and GPLv3 (code). |
@@ -106,13 +107,36 @@ the curated per-filament outputs are published.
 The tooling is plain Python 3 (standard library only — no dependencies).
 
 ```sh
+make hooks         # once per clone: enable the pre-commit hook
+make check         # validate + offline tests (what the pre-commit hook runs)
+make validate      # check profiles, docs and repo hygiene
+make validate-net  # also verify parent presets against Prusa's published system bundle
 make test          # run the offline test suite
 make test-net      # also validate against a pristine bundle pulled from Prusa's GitHub
 make list          # list presets in your local master bundle
 make publish       # regenerate profiles/ from manifest.json
 ```
 
-See `scripts/extract.py --help` for direct usage.
+See `scripts/extract.py --help` and `scripts/validate.py --help` for direct usage.
+
+### Validation
+
+`scripts/validate.py` checks the repository before each commit (via the pre-commit hook in
+`.githooks/`, enabled with `make hooks`). It validates exactly what's staged:
+
+- **Profiles:** file layout and naming; INI syntax (no malformed lines, duplicate keys or
+  presets, or `[presets]` block); required keys; inheritance cycles; well-formed
+  compatibility conditions; and that a filament type the Core One doesn't have built in is
+  covered by the printer-side setup docs. `make validate-net` also confirms every parent
+  preset exists in Prusa's current system bundle (catching dangling parents).
+- **Docs:** relative links and `#anchors` resolve, backticked repo paths exist, code fences
+  are closed, and each profile readme (`README__<profile>.md`) has a matching `.ini`.
+- **Repo hygiene:** the master config bundle and the local `manifest.json` are never
+  committed; `manifest.example.json` is well-formed.
+
+Errors block the commit; warnings are printed but don't (`--strict` makes them fail too).
+The validator only *reports*. It never edits profiles or judges tuned values. Bypass the
+hook in an emergency with `git commit --no-verify`.
 
 ## Contributing & reporting issues
 

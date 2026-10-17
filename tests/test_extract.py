@@ -7,8 +7,8 @@
 The core suite runs entirely against the committed fixture
 (tests/fixtures/sample_bundle.ini) — no network, fully deterministic.
 
-TestPristinePrusaBundle is an optional smoke test that pulls a real, pristine
-vendor profile from the PrusaSlicer GitHub repo and asserts the parser handles
+TestPristinePrusaBundle is an optional smoke test that pulls Prusa's real, pristine
+vendor bundle (PrusaSlicer-settings-prusa-fff on GitHub) and asserts the parser handles
 it without choking. It is skipped unless FFF_NET_TESTS=1 so the default run
 stays offline.
 """
@@ -16,7 +16,6 @@ stays offline.
 import os
 import sys
 import unittest
-import urllib.request
 from pathlib import Path
 
 # Make scripts/extract.py importable.
@@ -200,16 +199,13 @@ class TestPublish(unittest.TestCase):
 
 @unittest.skipUnless(os.environ.get("FFF_NET_TESTS"), "network smoke test; set FFF_NET_TESTS=1 to run")
 class TestPristinePrusaBundle(unittest.TestCase):
-    """Smoke test against a pristine vendor profile from the PrusaSlicer repo."""
-
-    URL = ("https://raw.githubusercontent.com/prusa3d/PrusaSlicer/master/"
-           "resources/profiles/PrusaResearch.ini")
+    """Smoke test against Prusa's pristine vendor bundle (PrusaSlicer-settings-prusa-fff)."""
 
     @classmethod
     def setUpClass(cls):
+        import validate
         try:
-            with urllib.request.urlopen(cls.URL, timeout=30) as r:
-                cls.text = r.read().decode("utf-8")
+            _, cls.text = validate.fetch_prusa_system_bundle()
         except Exception as e:  # pragma: no cover - network dependent
             raise unittest.SkipTest(f"could not fetch pristine Prusa bundle: {e}")
 

@@ -1,7 +1,7 @@
 # Adding a custom filament on the Prusa Core One
 
 Some profiles in this repository tag prints with a filament type the Core One doesn't have
-built in (for example `PEKK-A`). Each sliced G-code file records its `filament_type`, and the
+built in (for example `PEKK-A` or `EMI-ABS`). Each sliced G-code file records its `filament_type`, and the
 printer compares it with the name of the filament you loaded. If the printer has no filament
 with that name, it shows a **wrong-filament warning** when you start a print.
 
@@ -73,6 +73,51 @@ When loading, choose **PEKK-A**. If it isn't in the list, turn it on under **Man
 
 > ⚠️ **Fit the high-temperature idler door yourself before loading.** The printer reminds you
 > about it for its built-in PPS and PPA filaments, but not for custom ones.
+
+## Worked example: 3DXTech 3DXLABS EMI-ABS
+
+Profile: [`profiles/3DXTech/filament/3DXLABS_EMI-ABS__PrusaCOREOne_Prusaslicer.ini`](../profiles/3DXTech/filament/3DXLABS_EMI-ABS__PrusaCOREOne_Prusaslicer.ini)
+
+The standard structural profile for this filament, based on Prusa's Generic ABS @COREONE
+profile. Calibrated with a 0.4 mm standard-flow E3D ObXiDian nozzle.
+
+### Requirements
+
+- Core One (or Core One L) with a standard-flow nozzle; not for 0.6 mm or 0.8 mm nozzles
+- Hardened (abrasion-resistant) nozzle — the filament is abrasive
+
+### 1. Import the slicer profile
+
+In PrusaSlicer, use **File → Import → Import Config Bundle** and select
+`3DXLABS_EMI-ABS__PrusaCOREOne_Prusaslicer.ini`. It appears as
+**3DXTech 3DXLABS EMI-ABS** under filaments.
+
+### 2. Add an EMI-ABS custom filament on the printer
+
+The slicer profile tags prints as `EMI-ABS`. On the printer, go to
+**Manage Filaments → Edit Filaments**, pick an empty custom slot, and set:
+
+| Setting | Value | Notes |
+|---|---|---|
+| Name | `EMI-ABS` | Must match exactly, including capital letters and the hyphen |
+| Base Preset | ABS | The slicer profile is based on Generic ABS |
+| Nozzle Temperature | 290 °C | Same as the slicer profile |
+| Nozzle Preheat Temperature | leave default | |
+| Bed Temperature | 110 °C | Same as the slicer profile (first layer uses 105 °C) |
+| Heatbreak Temperature (if shown) | 40 °C | The profile's start G-code sets this anyway |
+| Minimum Chamber Temperature | 45 °C | Same as the slicer profile |
+| Nominal Chamber Temperature | 55 °C | Same as the slicer profile |
+| Maximum Chamber Temperature | 75 °C | Matches the printer's built-in ABS settings |
+| Is Abrasive | On | Contains a dissipative filler |
+| Is Flexible | Off | |
+| Requires Filtration | On | Matches the printer's built-in ABS settings |
+
+When loading, choose **EMI-ABS**. If it isn't in the list, turn it on under **Manage Filaments**
+(the filament visibility setting).
+
+> ⚠️ **This filament is brittle** and can keep breaking in the extruder until the setup is
+> right: preheat the nozzle before loading, don't over-tighten the idler screws, and turn off
+> auto-retract.
 
 ---
 

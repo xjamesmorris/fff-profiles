@@ -50,8 +50,10 @@ workflow to publish or update one.
    parents/print/printer) and **no `[presets]` block**. If you can, import it into
    PrusaSlicer via `File → Import → Import Config Bundle…` to confirm it loads clean.
 
-6. **Run the tests** before committing tooling changes: `make test` (offline). Optionally
-   `make test-net` to validate the parser against a pristine bundle from Prusa's GitHub.
+6. **Validate and test:** `make check` (validator + offline tests; the pre-commit hook runs
+   the same on what's staged). Run `make validate-net` to confirm every external parent
+   exists in Prusa's system bundle. Report validator findings to the author rather than
+   editing profile values. Optionally `make test-net`.
 
 7. Commit the generated `profiles/**/*.ini` **only when asked**, with the
    `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` trailer. (`manifest.json` is gitignored — local only.)

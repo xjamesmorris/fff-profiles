@@ -25,12 +25,28 @@ published as small, individually importable PrusaSlicer config bundles (one fila
   `<Base>__<Printer>_<Slicer>.ini` (no spaces; printer+slicer encoded in the name),
   e.g. `profiles/3DXTech/filament/3DXLABS_EMI-ABS__PrusaCOREOne_Prusaslicer.ini`.
 - `docs/` — user-facing setup guides. `CoreOne_custom_filament.md`: creating a custom
-  filament on the printer so a non-built-in `filament_type` (e.g. `PEKK-A`) doesn't trigger
-  a wrong-filament warning; PEKK-A+CF is the worked example.
+  filament on the printer so a non-built-in `filament_type` (e.g. `PEKK-A`, `EMI-ABS`)
+  doesn't trigger a wrong-filament warning, with a worked example per such profile. Each
+  of those profiles also has a `README__<profile>.md` beside its `.ini`. Printer-side
+  values come from the author's slicer profile plus author choices (EMI-ABS: base ABS,
+  max chamber 75 °C, filtration on, confirmed 2026-10-17); don't invent them.
 - `scripts/extract.py` — GPLv3 tool that splits the master bundle into per-profile files.
-- `tests/` — `test_extract.py` (stdlib `unittest`) + `fixtures/sample_bundle.ini`.
+- `scripts/validate.py` — GPLv3 pre-commit validator (report-only): profile layout/syntax/
+  required keys/inherits cycles/condition syntax, non-built-in `filament_type` covered by
+  docs, filament_vendor vs directory, Markdown links/anchors/backticked paths/fences/orphan
+  profile readmes (`README__<profile>.md`), no master bundle or `manifest.json` tracked, `manifest.example.json`
+  shape. `--check-system-presets` verifies external parents against Prusa's latest
+  published bundle (PrusaSlicer-settings-prusa-fff, resolved via `index.idx`). The Core
+  One built-in filament list (`BUILTIN_FILAMENT_TYPES`) comes from Prusa-Firmware-Buddy
+  `src/common/filament_presets.cpp`; update it if the firmware adds materials.
+- `.githooks/pre-commit` — exports the index to a temp dir and runs `validate.py` + the
+  offline tests on exactly what's staged. Enabled per clone with `make hooks`
+  (`core.hooksPath`); errors block, warnings don't.
+- `tests/` — `test_extract.py` and `test_validate.py` (stdlib `unittest`) +
+  `fixtures/sample_bundle.ini`. Validator tests build throwaway repo snapshots in temp dirs.
 - `manifest.example.json` — template listing which presets to publish.
-- `Makefile` — `test`, `test-net`, `list`, `publish` targets.
+- `Makefile` — `test`, `test-net`, `validate`, `validate-net`, `check` (validate + test),
+  `hooks`, `list`, `publish` targets.
 - `LICENSE` (CC BY-SA 4.0), `LICENSE-CODE` (GPLv3).
 
 ## How publishing works
@@ -57,7 +73,7 @@ published as small, individually importable PrusaSlicer config bundles (one fila
    `3DXTech PEKK-A+CF @COREONE HT0.6 experimental`, inherits system preset
    `Fiberon PPS-CF @COREONE HT0.6`), copied verbatim from the author's finalized
    `~/stuff/src/misc/3DXTech_PEKK-A+CF_COREONE_HT0.6.ini`. To update it, re-copy the
-   author's new file; don't regenerate it from a bundle. A same-named `.md` beside it
+   author's new file; don't regenerate it from a bundle. `README__CARBONX_PEKK-A+CF_HT0.6__PrusaCOREOne_Prusaslicer.md` beside it
    points users to the printer-side `PEKK-A` custom filament settings in `docs/`.
 
 ## Key decisions (do not silently reverse)
@@ -79,15 +95,15 @@ published as small, individually importable PrusaSlicer config bundles (one fila
 - Only commit/push when the author explicitly asks.
 - **After every push, update this handoff (`CLAUDE.md`) to reflect the new state, then
   commit and push that update.** (Standing instruction from the author.)
-- `make test` (offline) must pass before committing tooling changes. `make test-net`
-  additionally validates the parser against a pristine bundle from Prusa's GitHub.
+- `make check` (validate + offline tests) must pass before committing; the pre-commit hook
+  enforces it once `make hooks` has been run in the clone. `make test-net` / `make
+  validate-net` additionally hit Prusa's GitHub (pristine bundle parse + parent-preset check).
+- Never "fix" a validator finding by editing profile values; report it to the author.
 
 ## Likely next steps / TODO
 
-- **Profile validation lint (requested):** add a `scripts/validate.py` (+ tests) that
-  checks profile language/structure/quality — e.g. resolvable `inherits`, no dangling
-  parents, sane/consistent compatibility conditions, required keys present — to run
-  *before incorporating changes* (candidate for a pre-commit hook / CI).
+- **EMI-ABS vendor (author to decide):** `filament_vendor = Generic`, but the directory
+  says 3DXTech (validator `vendor` warning). A profile-value change, so it's the author's call.
 - **OrcaSlicer notes doc (requested):** a brief Markdown file expanding the README's
   "Calibration workflow" section — the author calibrated in OrcaSlicer (built-in tooling)
   then finished in PrusaSlicer. Document the CORE One gotchas: pressure advance is
@@ -103,4 +119,4 @@ published as small, individually importable PrusaSlicer config bundles (one fila
   variants were intentionally held back per the author, and so was the paired print profile
   `0.30mm High Temperature @COREONE HT0.6 - PEKK-A` (filament only for now).
 - Consider paired custom **process** profiles per filament (manifest already supports it).
-- Add CI (GitHub Actions) to run `make test` on push.
+- Add CI (GitHub Actions) to run `make check` (and optionally `make validate-net`) on push.
