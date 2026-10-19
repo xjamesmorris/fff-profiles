@@ -10,21 +10,14 @@ published as small, individually importable PrusaSlicer config bundles (one fila
 
 - GitHub remote: https://github.com/xjamesmorris/fff-profiles
 - Default branch: `main`
-- Latest release: **v1.1.0** (2026-10-17, tag on `cc5e7cc`) — 3DXTech CarbonX PEKK-A+CF
-  HT0.6 profile (+ per-profile readme) and `docs/CoreOne_custom_filament.md`.
-- Previous: **v1.0.0** (2026-07-23) — first release; extraction tooling + the first
-  published profile (3DXTech 3DXLABS EMI-ABS).
-- Unreleased on `main` since v1.1.0 (2026-10-17 → 2026-10-18, through `5bd8547`):
-  pre-commit validation suite (`scripts/validate.py`, `.githooks/`, `make check`/`hooks`);
-  EMI-ABS printer-side docs + readme and `filament_vendor` 3DXTech; `README__<profile>.md`
-  naming; 8 more filaments (see TODO "Publish more filaments"), incl. ezPC-CF 0.6 with its
-  named-printer list replaced by a Core One 0.6 condition; PET printer-side docs + Phaetus
-  readme; vendor check made case/space/punctuation-insensitive; **the repo became the
-  source of truth** (`scripts/sync.py`, `make status|install|pull`, `sync.py add`,
-  `tests/test_sync.py`, README "Editing profiles", publish-filament skill rewritten);
-  author's notes tidy-up in five profiles. Profiles regenerated from a PrusaSlicer 2.9.6
-  export carry `filament_flush_speed/volume = 0` (exporter defaults, not author tuning).
-  Validator is clean (0 errors, 0 warnings). Candidate for v1.2.0 when the author asks.
+- Latest release: **v1.2.0** (2026-10-18, tag on `4778e89`) — 8 new filament profiles
+  (see TODO "Publish more filaments"), EMI-ABS/PET printer-side docs + readmes, EMI-ABS
+  vendor 3DXTech, pre-commit validation suite, and the repo as source of truth
+  (`scripts/sync.py`).
+- Previous: **v1.1.0** (2026-10-17, tag on `cc5e7cc`) — 3DXTech CarbonX PEKK-A+CF HT0.6
+  profile (+ per-profile readme) and `docs/CoreOne_custom_filament.md`. **v1.0.0**
+  (2026-07-23) — first release; extraction tooling + 3DXTech 3DXLABS EMI-ABS.
+- Nothing unreleased on `main` since v1.2.0. Validator is clean (0 errors, 0 warnings).
 - Tags use semver (`vMAJOR.MINOR.PATCH`), annotated (`vX.Y.Z — summary`), each with a
   matching GitHub release (`gh release create`) whose notes follow the v1.0.0 layout.
 
