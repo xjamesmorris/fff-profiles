@@ -145,12 +145,11 @@ Whoever edits, technical values come from the author only. Claude runs `status`/
 
 ## Likely next steps / TODO
 
-- **3DXTech ezPC-CF @COREONE 0.6 held back (author):** its `compatible_printers_condition`
-  is empty and `compatible_printers` lists the author's own printer presets ("Prusa CORE
-  One HF0.6 nozzle", "… - Copy", "… - OBX500 HF"), which won't exist on anyone else's
-  install. Bring it in with `sync.py add "3DXTech ezPC-CF @COREONE 0.6" --vendor 3DXTech
-  --base CARBONX_EZPC-CF_0.6` once the author says so; the author then fixes the list
-  (blank or a condition) in the repo or PrusaSlicer. Its notes still say "Annealing?".
+- **ezPC-CF 0.6 in PrusaSlicer:** added to the repo 2026-10-18 with `compatible_printers`
+  cleared and the condition set to `printer_model=~/COREONE.*/ and nozzle_diameter[0]==0.6`
+  (any Core One variant, 0.6 mm nozzle), both at the author's direction. The author's live preset still pins it to their
+  named printers until `make install` runs with PrusaSlicer quit. Its notes still say
+  "Annealing?".
 - **Phaetus aeForce PET-GF annealing info (author has it):** add it to
   `profiles/Phaetus/filament/README__AEFORCE_PET-GF_HT0.6__PrusaCOREOne_Prusaslicer.md`
   (an "Annealing" section) exactly as the author supplies it. Not received yet.
@@ -171,7 +170,7 @@ Whoever edits, technical values come from the author only. Claude runs `status`/
   reconciliation layer will be the bulk of the work (see the gotchas above).
 - Publish more filaments. Published so far (generated unless noted), vendor set in the
   author's live presets (2026-10-17) so regeneration keeps it:
-  3DXTech: 3DXLABS EMI-ABS, 3DXSTAT PETG-CF 0.4, CarbonX PETG-CF 0.4, HIPS HF0.4, PEKK-A+CF
+  3DXTech: 3DXLABS EMI-ABS, 3DXSTAT PETG-CF 0.4, CarbonX PETG-CF 0.4, ezPC-CF 0.6, HIPS HF0.4, PEKK-A+CF
   HT0.6 (hand-supplied, experimental/uncalibrated); Zyltech: ASA-GF HF0.4, ASA-CF HF0.6;
   Phaetus: aeForce PET-GF HT0.6 (needs the `PET` printer-side filament); PushPlastic:
   PC-PBT-CF 0.6. Selection rule used: user presets with notes and shrinkage values that
