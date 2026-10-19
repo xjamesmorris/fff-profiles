@@ -1,59 +1,58 @@
 ---
 name: publish-filament
-description: Publish one or more filament (or process) profiles from the local PrusaSlicer master config bundle into the repo's profiles/ tree. Use when the author wants to extract, package, or release a profile (optionally with a paired process/printer) from their bundle, or regenerate profiles/*.ini.
+description: Publish, update or sync filament (or process) profiles between the author's PrusaSlicer presets and the repo's profiles/ tree, which is the source of truth. Use when the author wants to add a new profile from PrusaSlicer, pull PrusaSlicer edits into the repo, install repo profiles into PrusaSlicer, or check which side differs.
 ---
 
-# Publishing a filament profile
+# Publishing and syncing profiles
 
-This repo distributes PrusaSlicer profiles as small, individually importable config
-bundles under `profiles/<Vendor>/{filament,process}/`, generated from the author's master
-bundle by `scripts/extract.py`. Filenames encode printer+slicer and contain no spaces,
-e.g. `profiles/3DXTech/filament/3DXLABS_EMI-ABS__PrusaCOREOne_Prusaslicer.ini`. Use this
-workflow to publish or update one.
+The repo's `profiles/<Vendor>/{filament,process}/*.ini` files are the **source of truth**.
+Each is a small, importable PrusaSlicer config bundle; filenames encode printer+slicer and
+contain no spaces, e.g. `profiles/3DXTech/filament/3DXLABS_EMI-ABS__PrusaCOREOne_Prusaslicer.ini`.
+`scripts/sync.py` moves presets between the repo and PrusaSlicer's user preset directory.
 
 ## Guardrails (read first)
 
-- **Never author, tune, or flatten profile values.** The tooling only *selects and
-  copies* presets verbatim. Editing temperatures/speeds/flow etc. is the human author's
-  job — doing so would break the project's LLM-usage disclosure (see README).
-- **The master bundle is local-only and never committed** (`.gitignore` blocks
-  `*config_bundle*.ini`). Default path: `../PrusaSlicer_config_bundle.ini`.
+- **Never author, tune, or flatten profile values.** The tooling only copies preset lines
+  verbatim. Editing temperatures/speeds/flow etc. is the human author's job, in the repo
+  or in PrusaSlicer. Doing it yourself would break the README's LLM-usage disclosure.
+- Report validator findings to the author rather than editing profile values.
 - Only commit/push when the author explicitly asks.
 
-## Steps
+## Commands
 
-1. **Find the exact preset name(s).** Names contain spaces/`@`, so list them:
-   ```sh
-   make list                       # or: python3 scripts/extract.py --source <bundle> --list
-   ```
-   Ignore scratch presets (`- Copy`, `Calibration`, `simple`, `OLD …`) unless asked.
+```sh
+make status                 # which repo presets differ from / are missing in PrusaSlicer
+python3 scripts/sync.py status --diff [PRESET|FILE ...]   # show the differing lines
+make install                # repo -> PrusaSlicer; PrusaSlicer must be quit; backs up replaced files
+make pull                   # PrusaSlicer -> repo, for presets already in the repo
+python3 scripts/sync.py add "Exact Preset Name" --vendor Vendor --base FILE_BASE
+```
 
-2. **Add entries to `manifest.json`** (copy from `manifest.example.json` if absent). Each
-   filament entry: `name` (exact preset name, required), `vendor` (required — the output
-   directory), optional `base` (filename base; derived from the name if omitted), optional
-   `print` (paired process) and `printer`. Manifest-level `printer_label`/`slicer_label`
-   default to `PrusaCOREOne` / `Prusaslicer`; override per entry if needed. Standalone print
-   profiles go in a `processes` list (same fields, minus `print`).
+`install` and `pull` take `-n` (dry run) and optional preset names or repo file paths.
 
-3. **Generate:**
-   ```sh
-   make publish                    # runs extract.py against manifest.json
-   ```
+## Adding a new profile
 
-4. **Review the output and any notes.** Each `note: references parent not in bundle …`
-   means an ancestor wasn't found and is assumed to be a PrusaSlicer *system* preset. Verify
-   that's true — a genuine system preset (e.g. `Generic PETG @COREONE`) is fine, but an
-   unexpected name may be a **dangling parent** (a deleted user preset) that makes the export
-   incomplete. Fix the master bundle if so.
+1. Find the exact preset name: `ls ~/Library/Application\ Support/PrusaSlicer/filament/`
+   (the file name minus `.ini`). Skip scratch presets (`- Copy`, `Calibration`, `OLD …`)
+   unless asked. Confirm the vendor and filename base with the author.
+2. Run `sync.py add`. It includes user-preset parents and prints a `note:` for each parent
+   it assumes is a PrusaSlicer system preset.
+3. Check the preset's `filament_vendor` matches the vendor directory (the validator warns
+   otherwise). Changing it is a metadata edit the author must direct.
+4. If its `filament_type` isn't a Core One built-in, it needs a worked example in
+   `docs/CoreOne_custom_filament.md` and a `README__<profile>.md` beside the `.ini`, with
+   printer-side values from the author (the validator flags this).
+5. `make validate-net` (confirms system parents exist) and `make check`.
 
-5. **Sanity-check the file**: it should contain the filament section (plus any included
-   parents/print/printer) and **no `[presets]` block**. If you can, import it into
-   PrusaSlicer via `File → Import → Import Config Bundle…` to confirm it loads clean.
+## Updating a profile
 
-6. **Validate and test:** `make check` (validator + offline tests; the pre-commit hook runs
-   the same on what's staged). Run `make validate-net` to confirm every external parent
-   exists in Prusa's system bundle. Report validator findings to the author rather than
-   editing profile values. Optionally `make test-net`.
+- Author edited in PrusaSlicer: `make pull`, then show the author `git diff profiles/`.
+- Author edited in the repo: ask them to quit PrusaSlicer, then `make install`.
+- `make status` first if unsure which side changed. PrusaSlicer 2.9.6 writes
+  `filament_flush_speed/volume` on save, so those keys can differ harmlessly.
 
-7. Commit the generated `profiles/**/*.ini` **only when asked**, with the
-   `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` trailer. (`manifest.json` is gitignored — local only.)
+## Legacy route
+
+`make list` / `make publish` (`scripts/extract.py` + local `manifest.json` + a master
+bundle exported to `../PrusaSlicer_config_bundle.ini`) still works, but it regenerates
+files from PrusaSlicer and overwrites repo edits. Use it only if the author asks.

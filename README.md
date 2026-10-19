@@ -25,7 +25,7 @@ print/process and printer preset). To use one:
 ### Printer-side setup
 
 Some profiles tag prints with a filament type the Core One doesn't have built in (for
-example `PEKK-A` or `EMI-ABS`). For those, create a matching custom filament on the printer
+example `PEKK-A`, `EMI-ABS` or `PET`). For those, create a matching custom filament on the printer
 first, or it will show a wrong-filament warning when you start a print. See
 [Adding a custom filament on the Prusa Core One](docs/CoreOne_custom_filament.md), which
 has the exact printer settings and hardware requirements for each such profile.
@@ -37,8 +37,8 @@ Because these were tuned for a specific setup (Prusa CORE One+), treat them as s
 Each filament preset carries a compatibility condition targeting the Prusa CORE One
 (for example `printer_model=~/(COREONE…)/ and nozzle_diameter[0]==0.4`), so on another
 printer the filament may show as **incompatible** and stay hidden. Some profiles are
-narrower still: the 3DXTech PEKK-A+CF profile only matches a CORE One with the HT400 hotend
-and a standard-flow 0.6 mm nozzle. To adapt one:
+narrower still: the 3DXTech PEKK-A+CF and Phaetus aeForce PET-GF profiles only match a CORE
+One with the HT400 hotend and a standard-flow 0.6 mm nozzle. To adapt one:
 
 - Select a printer profile for **your** machine first, then either edit the filament's
   *Compatible printers condition* (Filament Settings → Advanced) to match, or tick
@@ -80,9 +80,10 @@ the TODOs in `CLAUDE.md`.
 
 Large language models were used in this project only for administrative work:
 documentation (this README), repository organization, and the **tooling** that
-packages and validates the profiles — the extraction and validation scripts under
-`scripts/`, their test suites, and the pre-commit hook. That tooling only *selects, copies and checks* presets; it does not author, tune,
-or alter any of the profiles' technical values.
+packages, syncs and validates the profiles — the extraction, sync and validation scripts
+under `scripts/`, their test suites, and the pre-commit hook. That tooling only *selects,
+copies and checks* presets; it does not author, tune, or alter any of the profiles'
+technical values.
 
 The printing profiles themselves — every temperature, speed, flow, and cooling value —
 were developed, tuned, and validated by the human author.
@@ -93,14 +94,15 @@ were developed, tuned, and validated by the human author.
 | --- | --- |
 | `profiles/<Vendor>/{filament,process}/` | Published, ready-to-import profiles (generated). |
 | `docs/` | Setup guides (e.g. adding a custom filament on the Core One). |
-| `scripts/extract.py` | Splits the maintainer's master config bundle into the per-profile files. |
+| `scripts/sync.py` | Syncs the repo's profiles with PrusaSlicer's user presets (both directions). |
+| `scripts/extract.py` | Legacy: splits a master config bundle into per-profile files. |
 | `scripts/validate.py`, `.githooks/` | Pre-commit validation of profiles, docs and repo hygiene. |
 | `tests/` | Test suite for the tooling, plus a fixture bundle. |
-| `manifest.example.json` | Template listing which presets to publish. |
+| `manifest.example.json` | Legacy template for `extract.py`. |
 | `LICENSE`, `LICENSE-CODE` | CC BY-SA 4.0 (profiles/docs) and GPLv3 (code). |
 
-The full master bundle is maintained locally by the author and is not committed; only
-the curated per-filament outputs are published.
+The files under `profiles/` are the source of truth: the author edits them here, or in
+PrusaSlicer and then pulls the change back (see below).
 
 ## Development
 
@@ -108,16 +110,39 @@ The tooling is plain Python 3 (standard library only — no dependencies).
 
 ```sh
 make hooks         # once per clone: enable the pre-commit hook
+make status        # which repo profiles differ from your PrusaSlicer presets
+make install       # copy repo profiles into PrusaSlicer (quit PrusaSlicer first)
+make pull          # copy edits made in PrusaSlicer back into the repo profiles
 make check         # validate + offline tests (what the pre-commit hook runs)
 make validate      # check profiles, docs and repo hygiene
 make validate-net  # also verify parent presets against Prusa's published system bundle
 make test          # run the offline test suite
 make test-net      # also validate against a pristine bundle pulled from Prusa's GitHub
-make list          # list presets in your local master bundle
-make publish       # regenerate profiles/ from manifest.json
 ```
 
-See `scripts/extract.py --help` and `scripts/validate.py --help` for direct usage.
+See `scripts/sync.py --help` and `scripts/validate.py --help` for direct usage.
+
+### Editing profiles
+
+The repository is the source of truth for its profiles, and `scripts/sync.py` keeps
+PrusaSlicer's user presets in step with it. A profile file and PrusaSlicer's own preset
+file hold the same `key = value` lines, so you can edit in either place:
+
+- **Edit in the repo**, then `make install` to load the change into PrusaSlicer. Quit
+  PrusaSlicer first; any preset it replaces is backed up under
+  `fff-profiles-backup/` in PrusaSlicer's configuration directory.
+- **Edit in PrusaSlicer** (save the preset), then `make pull` and review `git diff`.
+- `make status` shows which presets differ and which side is newer.
+- To bring a new PrusaSlicer preset into the repo:
+  `python3 scripts/sync.py add "Exact Preset Name" --vendor Vendor --base FILE_BASE`.
+  It writes `profiles/<Vendor>/filament/<FILE_BASE>__PrusaCOREOne_Prusaslicer.ini`, plus any
+  of the preset's user-preset parents.
+
+PrusaSlicer's configuration directory is found automatically on macOS, Linux and Windows;
+set `PRUSASLICER_CONFIG_DIR` or pass `--config-dir` to override it. The older
+master-bundle route (`make list` / `make publish` with `manifest.json`, via
+`scripts/extract.py`) still works, but it regenerates files from PrusaSlicer and would
+overwrite edits made in the repo.
 
 ### Validation
 
