@@ -14,18 +14,17 @@ published as small, individually importable PrusaSlicer config bundles (one fila
   HT0.6 profile (+ per-profile readme) and `docs/CoreOne_custom_filament.md`.
 - Previous: **v1.0.0** (2026-07-23) — first release; extraction tooling + the first
   published profile (3DXTech 3DXLABS EMI-ABS).
-- Unreleased on `main` since v1.1.0 (2026-10-17, through `61c82fb`): pre-commit validation
-  suite (`scripts/validate.py`, `.githooks/`, `make check`/`hooks`), EMI-ABS printer-side
-  setup docs + readme, author's `README__<profile>.md` naming for profile readmes, EMI-ABS
-  `filament_vendor` set to 3DXTech. Validator is clean (0 errors, 0 warnings).
-- Committed locally, not yet pushed (2026-10-18): 7 more generated filaments (see TODO "Publish more filaments"),
-  PET printer-side docs + Phaetus readme, validator vendor check made case/space/punctuation-
-  insensitive (`Push Plastic` ↔ `PushPlastic/`). Master bundle re-exported 2026-10-18 from
-  PrusaSlicer 2.9.6, which now writes `filament_flush_speed/volume = 0` into every filament
-  (exporter defaults, not author tuning); EMI-ABS regenerated with only those two lines added.
-  Also: **the repo became the source of truth** (author's decision, 2026-10-18):
-  new `scripts/sync.py` (`make status|install|pull`, `sync.py add`), `tests/test_sync.py`,
-  README "Editing profiles" section, publish-filament skill rewritten.
+- Unreleased on `main` since v1.1.0 (2026-10-17 → 2026-10-18, through `5bd8547`):
+  pre-commit validation suite (`scripts/validate.py`, `.githooks/`, `make check`/`hooks`);
+  EMI-ABS printer-side docs + readme and `filament_vendor` 3DXTech; `README__<profile>.md`
+  naming; 8 more filaments (see TODO "Publish more filaments"), incl. ezPC-CF 0.6 with its
+  named-printer list replaced by a Core One 0.6 condition; PET printer-side docs + Phaetus
+  readme; vendor check made case/space/punctuation-insensitive; **the repo became the
+  source of truth** (`scripts/sync.py`, `make status|install|pull`, `sync.py add`,
+  `tests/test_sync.py`, README "Editing profiles", publish-filament skill rewritten);
+  author's notes tidy-up in five profiles. Profiles regenerated from a PrusaSlicer 2.9.6
+  export carry `filament_flush_speed/volume = 0` (exporter defaults, not author tuning).
+  Validator is clean (0 errors, 0 warnings). Candidate for v1.2.0 when the author asks.
 - Tags use semver (`vMAJOR.MINOR.PATCH`), annotated (`vX.Y.Z — summary`), each with a
   matching GitHub release (`gh release create`) whose notes follow the v1.0.0 layout.
 
@@ -145,11 +144,13 @@ Whoever edits, technical values come from the author only. Claude runs `status`/
 
 ## Likely next steps / TODO
 
-- **ezPC-CF 0.6 in PrusaSlicer:** added to the repo 2026-10-18 with `compatible_printers`
-  cleared and the condition set to `printer_model=~/COREONE.*/ and nozzle_diameter[0]==0.6`
-  (any Core One variant, 0.6 mm nozzle), both at the author's direction. The author's live preset still pins it to their
-  named printers until `make install` runs with PrusaSlicer quit. Its notes still say
-  "Annealing?".
+- **`make install` pending (author):** the author's live PrusaSlicer presets lag the repo
+  (2026-10-18): the notes edits, ezPC-CF 0.6's new condition (live copy still pins the
+  author's named printers), the flush keys, and PEKK-A+CF `… experimental` (not yet in
+  PrusaSlicer). Run `make install` with PrusaSlicer quit; `make status` should then be clean.
+- **Validator gap (offered, not requested yet):** it doesn't catch an unterminated quoted
+  value (e.g. notes ending `\"`) or a setting line deleted by a hand edit. Both happened in
+  CarbonX PETG-CF on 2026-10-18 and were fixed at the author's request.
 - **Phaetus aeForce PET-GF annealing info (author has it):** add it to
   `profiles/Phaetus/filament/README__AEFORCE_PET-GF_HT0.6__PrusaCOREOne_Prusaslicer.md`
   (an "Annealing" section) exactly as the author supplies it. Not received yet.
