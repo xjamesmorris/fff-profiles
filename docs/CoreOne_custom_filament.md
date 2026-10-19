@@ -1,7 +1,7 @@
 # Adding a custom filament on the Prusa Core One
 
 Some profiles in this repository tag prints with a filament type the Core One doesn't have
-built in (for example `PEKK-A` or `EMI-ABS`). Each sliced G-code file records its `filament_type`, and the
+built in (for example `PEKK-A`, `EMI-ABS` or `PET`). Each sliced G-code file records its `filament_type`, and the
 printer compares it with the name of the filament you loaded. If the printer has no filament
 with that name, it shows a **wrong-filament warning** when you start a print.
 
@@ -118,6 +118,45 @@ When loading, choose **EMI-ABS**. If it isn't in the list, turn it on under **Ma
 > ⚠️ **This filament is brittle** and can keep breaking in the extruder until the setup is
 > right: preheat the nozzle before loading, don't over-tighten the idler screws, and turn off
 > auto-retract.
+
+## Worked example: Phaetus aeForce PET-GF
+
+Profile: [`profiles/Phaetus/filament/AEFORCE_PET-GF_HT0.6__PrusaCOREOne_Prusaslicer.ini`](../profiles/Phaetus/filament/AEFORCE_PET-GF_HT0.6__PrusaCOREOne_Prusaslicer.ini)
+
+Based on Prusa's Fiberon PPS-GF @COREONE HT0.6 profile.
+
+### Requirements
+
+- PrusaSlicer 2.9.6 or newer
+- Prusa system profiles 2.5.11 or newer (**Configuration → Check for Configuration Updates**)
+- Core One with the HT400 hotend and a standard-flow 0.6 mm nozzle
+
+### 1. Import the slicer profile
+
+In PrusaSlicer, use **File → Import → Import Config Bundle** and select
+`AEFORCE_PET-GF_HT0.6__PrusaCOREOne_Prusaslicer.ini`. It appears as
+**Phaetus aeForce PET-GF @COREONE HT0.6** under filaments.
+
+### 2. Add a PET custom filament on the printer
+
+The slicer profile tags prints as `PET`. On the printer, go to
+**Manage Filaments → Edit Filaments**, pick an empty custom slot, and set:
+
+| Setting | Value | Notes |
+|---|---|---|
+| Name | `PET` | Must match exactly, in capitals |
+| Nozzle Temperature | 290 °C | The slicer profile prints at 320 °C |
+| Nozzle Preheat Temperature | 170 °C | |
+| Bed Temperature | 85 °C | Same as the slicer profile |
+| Nominal Chamber Temperature | 45 °C | The slicer profile's nominal chamber temperature is 55 °C |
+| Minimum Chamber Temperature | 40 °C | Same as the slicer profile |
+| Maximum Chamber Temperature | 55 °C | |
+| Is Abrasive | On | Glass-fiber filled |
+| Is Flexible | Off | |
+| Requires Filtration | On | |
+
+When loading, choose **PET**. If it isn't in the list, turn it on under **Manage Filaments**
+(the filament visibility setting).
 
 ---
 

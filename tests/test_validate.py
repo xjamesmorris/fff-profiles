@@ -153,6 +153,11 @@ class TestProfiles(RepoCase):
         self.edit(PROFILE, "filament_vendor = Acme", "filament_vendor = Generic")
         self.assertFinds("warning", "vendor")
 
+    def test_vendor_match_ignores_spacing_and_case(self):
+        self.write("profiles/PushPlastic/filament/PC__PrusaCOREOne_Prusaslicer.ini",
+                   GOOD_INI.replace("filament_vendor = Acme", "filament_vendor = Push Plastic"))
+        self.assertEqual(self.findings("warning", "vendor"), [])
+
     def test_compatible_printers_pinned_warns(self):
         self.edit(PROFILE, "compatible_printers =\n", 'compatible_printers = "My Printer"\n')
         self.assertFinds("warning", "conditions", "pins")

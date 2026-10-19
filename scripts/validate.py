@@ -34,7 +34,8 @@ Findings are `error` (blocks the commit) or `warning` (printed, doesn't block;
                   a PrusaCOREOne file should target COREONE
     printer-side  a filament_type that isn't a Core One built-in must be mentioned in the
                   docs (the printer needs a matching custom filament)
-    vendor        filament_vendor matches the vendor directory
+    vendor        filament_vendor matches the vendor directory (ignoring case, spaces and
+                  punctuation, so `Push Plastic` matches PushPlastic/)
   *.md
     links         relative links and #anchors resolve
     paths         backticked repo paths (`profiles/...`, `docs/...`) exist
@@ -221,7 +222,7 @@ def check_profile(root: Path, rel: Path, report: Report) -> Profile | None:
             if not s.get("filament_type"):
                 report.error(rel, "content", f"[filament:{s.name}] has no filament_type", at)
             fv = (s.get("filament_vendor") or "").strip('"')
-            if vendor and fv and fv != vendor:
+            if vendor and fv and same_name(fv) != same_name(vendor):
                 report.warning(rel, "vendor", f"[filament:{s.name}] filament_vendor is {fv!r} "
                                               f"but the directory vendor is {vendor!r}", at)
         if not s.get("inherits") and s.kind in ("filament", "print"):
@@ -245,6 +246,11 @@ def check_profile(root: Path, rel: Path, report: Report) -> Profile | None:
 
     check_inherits(profile, report, line_of)
     return profile
+
+
+def same_name(name: str) -> str:
+    """Comparison key for vendor names: case-, space- and punctuation-insensitive."""
+    return re.sub(r"[^0-9a-z]", "", name.lower())
 
 
 def check_inherits(profile: Profile, report: Report, line_of) -> None:
