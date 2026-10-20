@@ -8,7 +8,6 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest import mock
 
 REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO / "scripts"))
@@ -54,8 +53,7 @@ class SyncCase(unittest.TestCase):
 
     def run_sync(self, *argv):
         out = io.StringIO()
-        with contextlib.redirect_stdout(out), \
-                mock.patch.object(sync, "prusaslicer_running", return_value=False):
+        with contextlib.redirect_stdout(out):
             sync.main(["--root", str(self.root), "--config-dir", str(self.config), *argv])
         return out.getvalue()
 
@@ -92,38 +90,6 @@ class TestStatus(SyncCase):
             self.run_sync("status", "Nope")
 
 
-class TestInstall(SyncCase):
-    def test_install_writes_values_and_backs_up(self):
-        self.write_live("Acme PLA", LIVE_SAME.replace("215", "220"))
-        self.run_sync("install")
-        text = self.live("Acme PLA")
-        self.assertIn("temperature = 215", text)
-        self.assertTrue(text.startswith("# installed by fff-profiles from " + PROFILE))
-        self.assertNotIn("[filament:", text)
-        backups = list((self.config / sync.BACKUP_DIR).rglob("Acme PLA.ini"))
-        self.assertEqual(len(backups), 1)
-        self.assertIn("temperature = 220", backups[0].read_text(encoding="utf-8"))
-
-    def test_install_missing_preset(self):
-        self.run_sync("install")
-        self.assertIn("temperature = 215", self.live("Acme PLA"))
-
-    def test_dry_run_changes_nothing(self):
-        out = self.run_sync("install", "-n")
-        self.assertIn("would install", out)
-        self.assertFalse((self.config / "filament" / "Acme PLA.ini").exists())
-
-    def test_refuses_while_prusaslicer_runs(self):
-        with mock.patch.object(sync, "prusaslicer_running", return_value=True):
-            with self.assertRaises(SystemExit):
-                sync.main(["--root", str(self.root), "--config-dir", str(self.config),
-                           "install"])
-
-    def test_target_by_file_path(self):
-        self.run_sync("install", str(self.root / PROFILE))
-        self.assertTrue((self.config / "filament" / "Acme PLA.ini").exists())
-
-
 class TestPull(SyncCase):
     def test_pull_updates_section_and_keeps_header(self):
         self.write_live("Acme PLA", LIVE_SAME.replace("215", "220"))
@@ -146,8 +112,8 @@ class TestPull(SyncCase):
         self.assertIn("skip", out)
         self.assertEqual(self.repo(), REPO_TEXT)
 
-    def test_round_trip_is_stable(self):
-        self.run_sync("install")
+    def test_pull_ignores_live_header_comment(self):
+        self.write_live("Acme PLA", LIVE_SAME)
         self.run_sync("pull")
         self.assertEqual(self.repo(), REPO_TEXT)
 
@@ -169,6 +135,26 @@ class TestAdd(SyncCase):
     def test_add_unknown_preset(self):
         with self.assertRaises(SystemExit):
             self.run_sync("add", "Nope", "--vendor", "Acme")
+
+
+class TestNeverWritesToPrusaSlicer(SyncCase):
+    """The author's working presets must never change (author's decision, 2026-10-19)."""
+
+    def snapshot(self):
+        return {p: p.read_bytes() for p in sorted(self.config.rglob("*")) if p.is_file()}
+
+    def test_no_command_touches_config_dir(self):
+        self.write_live("Acme PLA", LIVE_SAME.replace("215", "220"))
+        self.write_live("Acme PETG", "temperature = 240\n")
+        before = self.snapshot()
+        self.run_sync("status", "--diff")
+        self.run_sync("pull")
+        self.run_sync("add", "Acme PETG", "--vendor", "Acme", "--base", "PETG")
+        self.assertEqual(self.snapshot(), before)
+
+    def test_install_command_removed(self):
+        with self.assertRaises(SystemExit), contextlib.redirect_stderr(io.StringIO()):
+            self.run_sync("install")
 
 
 if __name__ == "__main__":

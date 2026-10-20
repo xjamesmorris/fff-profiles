@@ -3,7 +3,7 @@ PYTHON ?= python3
 BUNDLE ?= ../PrusaSlicer_config_bundle.ini
 MANIFEST ?= manifest.json
 
-.PHONY: help test test-net validate validate-net check hooks status install pull list publish
+.PHONY: help test test-net validate validate-net check hooks status pull list publish
 
 help:
 	@echo "Targets:"
@@ -14,7 +14,6 @@ help:
 	@echo "  make check     - validate + test (what the pre-commit hook runs)"
 	@echo "  make hooks     - enable the pre-commit hook in this clone"
 	@echo "  make status    - show repo profiles that differ from PrusaSlicer's presets"
-	@echo "  make install   - copy repo profiles into PrusaSlicer (quit PrusaSlicer first)"
 	@echo "  make pull      - copy PrusaSlicer edits back into the repo profiles"
 	@echo "  (legacy) make list / publish - extract from a master bundle via \$$MANIFEST"
 
@@ -38,9 +37,6 @@ hooks:
 
 status:
 	$(PYTHON) scripts/sync.py status
-
-install:
-	$(PYTHON) scripts/sync.py install
 
 pull:
 	$(PYTHON) scripts/sync.py pull

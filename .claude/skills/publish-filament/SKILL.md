@@ -1,6 +1,6 @@
 ---
 name: publish-filament
-description: Publish, update or sync filament (or process) profiles between the author's PrusaSlicer presets and the repo's profiles/ tree, which is the source of truth. Use when the author wants to add a new profile from PrusaSlicer, pull PrusaSlicer edits into the repo, install repo profiles into PrusaSlicer, or check which side differs.
+description: Publish, update or sync filament (or process) profiles between the author's PrusaSlicer presets and the repo's profiles/ tree, which is the source of truth. Use when the author wants to add a new profile from PrusaSlicer, pull PrusaSlicer edits into the repo, or check which side differs.
 ---
 
 # Publishing and syncing profiles
@@ -8,7 +8,10 @@ description: Publish, update or sync filament (or process) profiles between the 
 The repo's `profiles/<Vendor>/{filament,process}/*.ini` files are the **source of truth**.
 Each is a small, importable PrusaSlicer config bundle; filenames encode printer+slicer and
 contain no spaces, e.g. `profiles/3DXTech/filament/3DXLABS_EMI-ABS__PrusaCOREOne_Prusaslicer.ini`.
-`scripts/sync.py` moves presets between the repo and PrusaSlicer's user preset directory.
+`scripts/sync.py` compares the repo with PrusaSlicer's user preset directory and copies
+from PrusaSlicer into the repo. It never writes to PrusaSlicer: the author loads repo
+profiles there by hand (File → Import → Import Config Bundle), so working presets are
+never changed. Don't write into PrusaSlicer's directory by any other means either.
 
 ## Guardrails (read first)
 
@@ -23,12 +26,11 @@ contain no spaces, e.g. `profiles/3DXTech/filament/3DXLABS_EMI-ABS__PrusaCOREOne
 ```sh
 make status                 # which repo presets differ from / are missing in PrusaSlicer
 python3 scripts/sync.py status --diff [PRESET|FILE ...]   # show the differing lines
-make install                # repo -> PrusaSlicer; PrusaSlicer must be quit; backs up replaced files
 make pull                   # PrusaSlicer -> repo, for presets already in the repo
 python3 scripts/sync.py add "Exact Preset Name" --vendor Vendor --base FILE_BASE
 ```
 
-`install` and `pull` take `-n` (dry run) and optional preset names or repo file paths.
+`pull` takes `-n` (dry run); `status` and `pull` take optional preset names or repo file paths.
 
 ## Adding a new profile
 
@@ -47,7 +49,7 @@ python3 scripts/sync.py add "Exact Preset Name" --vendor Vendor --base FILE_BASE
 ## Updating a profile
 
 - Author edited in PrusaSlicer: `make pull`, then show the author `git diff profiles/`.
-- Author edited in the repo: ask them to quit PrusaSlicer, then `make install`.
+- Author edited in the repo: they import it into PrusaSlicer themselves when ready.
 - `make status` first if unsure which side changed. PrusaSlicer 2.9.6 writes
   `filament_flush_speed/volume` on save, so those keys can differ harmlessly.
 

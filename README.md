@@ -111,7 +111,6 @@ The tooling is plain Python 3 (standard library only — no dependencies).
 ```sh
 make hooks         # once per clone: enable the pre-commit hook
 make status        # which repo profiles differ from your PrusaSlicer presets
-make install       # copy repo profiles into PrusaSlicer (quit PrusaSlicer first)
 make pull          # copy edits made in PrusaSlicer back into the repo profiles
 make check         # validate + offline tests (what the pre-commit hook runs)
 make validate      # check profiles, docs and repo hygiene
@@ -124,13 +123,13 @@ See `scripts/sync.py --help` and `scripts/validate.py --help` for direct usage.
 
 ### Editing profiles
 
-The repository is the source of truth for its profiles, and `scripts/sync.py` keeps
-PrusaSlicer's user presets in step with it. A profile file and PrusaSlicer's own preset
-file hold the same `key = value` lines, so you can edit in either place:
+The repository is the source of truth for its profiles. A profile file and PrusaSlicer's
+own preset file hold the same `key = value` lines, so you can edit in either place.
+`scripts/sync.py` compares the two and copies from PrusaSlicer into the repo. It never
+writes to PrusaSlicer, so your working presets there are never changed.
 
-- **Edit in the repo**, then `make install` to load the change into PrusaSlicer. Quit
-  PrusaSlicer first; any preset it replaces is backed up under
-  `fff-profiles-backup/` in PrusaSlicer's configuration directory.
+- **Edit in the repo**, then load the profile into PrusaSlicer yourself with
+  **File → Import → Import Config Bundle…** when you're ready.
 - **Edit in PrusaSlicer** (save the preset), then `make pull` and review `git diff`.
 - `make status` shows which presets differ and which side is newer.
 - To bring a new PrusaSlicer preset into the repo:

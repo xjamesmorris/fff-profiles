@@ -13,15 +13,17 @@
 # You should have received a copy of the GNU General Public License along with
 # this program. If not, see <https://www.gnu.org/licenses/>.
 """
-The repo's profiles/ tree is the source of truth. This tool moves presets between it
-and PrusaSlicer's user preset directory, so a profile can be edited in either place:
+The repo's profiles/ tree is the source of truth. This tool compares it with
+PrusaSlicer's user preset directory and copies presets from PrusaSlicer into the repo:
 
   status          which repo presets differ from (or are missing in) PrusaSlicer
-  install         repo -> PrusaSlicer (refuses while PrusaSlicer is running;
-                  replaced files are backed up under <config>/fff-profiles-backup/)
   pull            PrusaSlicer -> repo, for presets already in the repo
   add NAME ...    bring a new PrusaSlicer preset (and any user-preset parents) into
-                  the repo once; afterwards use pull/install
+                  the repo once; afterwards use pull
+
+It never writes to PrusaSlicer's directory, so the author's working presets there are
+never changed. To load a repo profile into PrusaSlicer, use File > Import > Import
+Config Bundle (author's decision, 2026-10-19).
 
 A repo profile is a small config bundle: `[filament:Name]` followed by `key = value`
 lines. PrusaSlicer keeps the same lines in <config>/filament/Name.ini, under a
@@ -32,7 +34,6 @@ tunes, or flattens any technical values — that stays with the human author.
 
 Usage:
   python3 scripts/sync.py status [--diff] [PRESET|FILE ...]
-  python3 scripts/sync.py install [-n] [--force] [PRESET|FILE ...]
   python3 scripts/sync.py pull [-n] [PRESET|FILE ...]
   python3 scripts/sync.py add "Preset Name" --vendor V [--base B] [--kind filament]
 
@@ -46,10 +47,8 @@ from __future__ import annotations
 import argparse
 import difflib
 import os
-import subprocess
 import sys
 from dataclasses import dataclass
-from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -57,7 +56,6 @@ import extract  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent
 KINDS = ("filament", "print", "printer")   # section kind == PrusaSlicer subdirectory
-BACKUP_DIR = "fff-profiles-backup"
 
 
 @dataclass
@@ -163,19 +161,6 @@ def compare(p: RepoPreset, config_dir: Path) -> tuple[str, list[str] | None]:
     return ("same" if live == values(p.body) else "differs"), live
 
 
-def prusaslicer_running() -> bool:
-    try:
-        if sys.platform.startswith("win"):
-            out = subprocess.run(["tasklist"], capture_output=True, text=True).stdout
-        else:
-            out = subprocess.run(["ps", "-axo", "comm"], capture_output=True, text=True).stdout
-    except OSError:
-        return False
-    return any(Path(line.strip()).name.lower() in ("prusaslicer", "prusa-slicer",
-                                                    "prusa-slicer.exe", "prusaslicer.exe")
-               for line in out.splitlines())
-
-
 def cmd_status(selected, config_dir, root, show_diff) -> int:
     counts = {"same": 0, "differs": 0, "missing": 0}
     for p in sorted(selected, key=lambda p: (p.kind, p.name)):
@@ -197,36 +182,6 @@ def cmd_status(selected, config_dir, root, show_diff) -> int:
                 print("    " + line)
     print(f"status: {counts['same']} same, {counts['differs']} differ, "
           f"{counts['missing']} missing in PrusaSlicer ({config_dir})")
-    return 0
-
-
-def cmd_install(selected, config_dir, root, dry_run, force) -> int:
-    if not dry_run and not force and prusaslicer_running():
-        raise SystemExit("error: PrusaSlicer is running; quit it first (it would overwrite "
-                         "or ignore the installed files), or pass --force")
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    n = 0
-    for p in sorted(selected, key=lambda p: (p.kind, p.name)):
-        state, _ = compare(p, config_dir)
-        if state == "same":
-            continue
-        dest = live_path(config_dir, p.kind, p.name)
-        print(f"{'would install' if dry_run else 'install'}  [{p.kind}:{p.name}]  "
-              f"({state} in PrusaSlicer)")
-        n += 1
-        if dry_run:
-            continue
-        if dest.exists():
-            backup = config_dir / BACKUP_DIR / stamp / p.kind / dest.name
-            backup.parent.mkdir(parents=True, exist_ok=True)
-            backup.write_bytes(dest.read_bytes())
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        header = f"# installed by fff-profiles from {rel(p.files[0], root)}"
-        dest.write_text("\n".join([header] + values(p.body)) + "\n", encoding="utf-8")
-    if n and not dry_run:
-        print(f"installed {n} preset(s); backups (if any) in {config_dir / BACKUP_DIR / stamp}")
-    elif not n:
-        print("nothing to install: PrusaSlicer already matches the repo")
     return 0
 
 
@@ -302,11 +257,6 @@ def main(argv: list[str]) -> int:
     st.add_argument("--diff", action="store_true", help="print the differing lines")
     st.add_argument("targets", nargs="*")
 
-    ins = sub.add_parser("install", help="copy repo presets into PrusaSlicer")
-    ins.add_argument("-n", "--dry-run", action="store_true")
-    ins.add_argument("--force", action="store_true", help="install even if PrusaSlicer is running")
-    ins.add_argument("targets", nargs="*")
-
     pl = sub.add_parser("pull", help="copy PrusaSlicer presets back into the repo")
     pl.add_argument("-n", "--dry-run", action="store_true")
     pl.add_argument("targets", nargs="*")
@@ -331,8 +281,6 @@ def main(argv: list[str]) -> int:
     selected = select(load_repo(root), args.targets, root)
     if args.cmd == "status":
         return cmd_status(selected, config_dir, root, args.diff)
-    if args.cmd == "install":
-        return cmd_install(selected, config_dir, root, args.dry_run, args.force)
     return cmd_pull(selected, config_dir, root, args.dry_run)
 
 
