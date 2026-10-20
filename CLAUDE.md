@@ -17,8 +17,9 @@ published as small, individually importable PrusaSlicer config bundles (one fila
 - Previous: **v1.1.0** (2026-10-17, tag on `cc5e7cc`) — 3DXTech CarbonX PEKK-A+CF HT0.6
   profile (+ per-profile readme) and `docs/CoreOne_custom_filament.md`. **v1.0.0**
   (2026-07-23) — first release; extraction tooling + 3DXTech 3DXLABS EMI-ABS.
-- Uncommitted (2026-10-19): `install` removed from `sync.py`; both PETG-CF profiles removed.
-- Nothing else unreleased on `main` since v1.2.0. Validator is clean (0 errors, 0 warnings).
+- Unreleased on `main` since v1.2.0 (2026-10-19, through `b9b39fa`): `install` removed from
+  `sync.py` (nothing writes into PrusaSlicer); both PETG-CF profiles withdrawn for
+  recalibration. Validator is clean (0 errors, 0 warnings).
 - Tags use semver (`vMAJOR.MINOR.PATCH`), annotated (`vX.Y.Z — summary`), each with a
   matching GitHub release (`gh release create`) whose notes follow the v1.0.0 layout.
 
